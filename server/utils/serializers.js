@@ -40,6 +40,7 @@ export function serializeEvent(row) {
     language: row.language,
     audience: row.audience,
     heroGradient: row.hero_gradient,
+    imageUrl: row.image_url || "",
     shortDescription: row.short_description,
     description: row.description,
     highlights: parseJson(row.highlights_json, []),

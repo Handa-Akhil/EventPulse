@@ -1,4 +1,5 @@
 import { EVENTS } from "../../src/data/events.js";
+import { config } from "../config.js";
 import { getPool } from "./pool.js";
 
 const TABLE_STATEMENTS = [
@@ -50,12 +51,33 @@ const TABLE_STATEMENTS = [
   )`,
 ];
 
+async function ensureColumnExists(pool, tableName, columnName, definition) {
+  const [rows] = await pool.execute(
+    `SELECT COUNT(*) AS columnCount
+     FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = ?
+       AND TABLE_NAME = ?
+       AND COLUMN_NAME = ?`,
+    [config.db.name, tableName, columnName],
+  );
+
+  if (rows[0].columnCount > 0) {
+    return;
+  }
+
+  await pool.query(
+    `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`,
+  );
+}
+
 export async function initDatabase() {
   const pool = await getPool();
 
   for (const statement of TABLE_STATEMENTS) {
     await pool.query(statement);
   }
+
+  await ensureColumnExists(pool, "events", "image_url", "TEXT NULL AFTER hero_gradient");
 
   const upsertStatement = `
     INSERT INTO events (
@@ -72,12 +94,13 @@ export async function initDatabase() {
       language,
       audience,
       hero_gradient,
+      image_url,
       short_description,
       description,
       highlights_json,
       showtimes_json
     ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     )
     ON DUPLICATE KEY UPDATE
       title = VALUES(title),
@@ -92,6 +115,7 @@ export async function initDatabase() {
       language = VALUES(language),
       audience = VALUES(audience),
       hero_gradient = VALUES(hero_gradient),
+      image_url = VALUES(image_url),
       short_description = VALUES(short_description),
       description = VALUES(description),
       highlights_json = VALUES(highlights_json),
@@ -114,6 +138,7 @@ export async function initDatabase() {
       event.language,
       event.audience,
       event.heroGradient,
+      event.imageUrl || null,
       event.shortDescription,
       event.description,
       JSON.stringify(event.highlights),

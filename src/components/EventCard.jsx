@@ -1,11 +1,15 @@
 import { Link } from "react-router-dom";
 
 export default function EventCard({ event }) {
+  const posterBackground = event.imageUrl
+    ? `linear-gradient(180deg, rgba(8, 6, 12, 0.18) 0%, rgba(8, 6, 12, 0.5) 100%), url("${event.imageUrl}")`
+    : event.heroGradient;
+
   return (
     <article className="event-card panel">
       <div
         className="event-card__poster"
-        style={{ backgroundImage: event.heroGradient }}
+        style={{ backgroundImage: posterBackground }}
       >
         <span className="tag">{event.category}</span>
         <div>

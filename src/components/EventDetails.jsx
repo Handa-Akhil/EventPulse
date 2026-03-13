@@ -114,6 +114,9 @@ export default function EventDetails() {
   }
 
   const total = quantity * event.price;
+  const heroBackground = event.imageUrl
+    ? `linear-gradient(180deg, rgba(8, 6, 12, 0.1) 0%, rgba(8, 6, 12, 0.6) 100%), url("${event.imageUrl}")`
+    : event.heroGradient;
 
   return (
     <main className="page-shell details-page">
@@ -129,7 +132,7 @@ export default function EventDetails() {
       <section className="details-hero panel fade-up">
         <div
           className="details-hero__visual"
-          style={{ backgroundImage: event.heroGradient }}
+          style={{ backgroundImage: heroBackground }}
         >
           <span className="tag">{event.category}</span>
           <h1>{event.title}</h1>

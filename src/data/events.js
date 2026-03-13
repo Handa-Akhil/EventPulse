@@ -73,6 +73,7 @@ export const EVENTS = [
     language: "Hindi, English",
     audience: "UA 13+",
     heroGradient: "linear-gradient(135deg, #ff6f61 0%, #ffd166 100%)",
+    imageUrl: "/event-images/MovieEvent.jpg",
     shortDescription:
       "A high-stakes sci-fi thriller premiere with immersive visuals and late-night energy.",
     description:
@@ -93,6 +94,7 @@ export const EVENTS = [
     language: "English",
     audience: "18+",
     heroGradient: "linear-gradient(135deg, #ff9671 0%, #ffc75f 100%)",
+    imageUrl: "/event-images/ComedyEvents.jpg",
     shortDescription:
       "Sharp crowd work and punch-heavy storytelling from one of the busiest touring comics.",
     description:
@@ -113,6 +115,7 @@ export const EVENTS = [
     language: "Hindi, English",
     audience: "All ages",
     heroGradient: "linear-gradient(135deg, #ee0979 0%, #ff6a00 100%)",
+    imageUrl: "/event-images/MusicEvent.jpg",
     shortDescription:
       "An arena-scale music night with stadium visuals, live percussion, and multiple guest acts.",
     description:
@@ -133,6 +136,7 @@ export const EVENTS = [
     language: "English, Hindi",
     audience: "All ages",
     heroGradient: "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)",
+    imageUrl: "/event-images/SportsEvent.webp",
     shortDescription:
       "An evening T20 clash with a packed crowd, floodlights, and a playoff-style atmosphere.",
     description:
@@ -193,6 +197,7 @@ export const EVENTS = [
     language: "Hindi, English",
     audience: "16+",
     heroGradient: "linear-gradient(135deg, #ffafbd 0%, #ffc3a0 100%)",
+    imageUrl: "/event-images/ComedyEvents.jpg",
     shortDescription:
       "A fast, relatable set built on office politics, dating apps, and family group chats.",
     description:
@@ -213,6 +218,7 @@ export const EVENTS = [
     language: "Hindi, English",
     audience: "All ages",
     heroGradient: "linear-gradient(135deg, #7928ca 0%, #ff0080 100%)",
+    imageUrl: "/event-images/MusicEvent.jpg",
     shortDescription:
       "Electronic-pop headliners, bold stage design, and a festival-style crowd experience.",
     description:
@@ -233,6 +239,7 @@ export const EVENTS = [
     language: "English",
     audience: "All ages",
     heroGradient: "linear-gradient(135deg, #43cea2 0%, #185a9d 100%)",
+    imageUrl: "/event-images/SportsEvent.webp",
     shortDescription:
       "A finals-night indoor showdown with quick rallies, crowd cams, and tight arena acoustics.",
     description:
@@ -253,6 +260,7 @@ export const EVENTS = [
     language: "Telugu, English",
     audience: "U",
     heroGradient: "linear-gradient(135deg, #5ee7df 0%, #b490ca 100%)",
+    imageUrl: "/event-images/MovieEvent.jpg",
     shortDescription:
       "A restored cult favorite on the big screen with upgraded sound and a themed foyer experience.",
     description:
@@ -273,6 +281,7 @@ export const EVENTS = [
     language: "Tamil, English",
     audience: "All ages",
     heroGradient: "linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%)",
+    imageUrl: "/event-images/MusicEvent.jpg",
     shortDescription:
       "A coastal-city concert built around soaring vocals, band arrangements, and crowd-led choruses.",
     description:
@@ -333,6 +342,7 @@ export const EVENTS = [
     language: "English, Hindi",
     audience: "All ages",
     heroGradient: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
+    imageUrl: "/event-images/SportsEvent.webp",
     shortDescription:
       "A finals-day live event with giant screens, host-led segments, and stadium-style fan engagement.",
     description:
@@ -353,6 +363,7 @@ export const EVENTS = [
     language: "Hindi, Punjabi",
     audience: "UA 13+",
     heroGradient: "linear-gradient(135deg, #ff8a65 0%, #ffd54f 100%)",
+    imageUrl: "/event-images/MovieEvent.jpg",
     shortDescription:
       "A weekend premiere screening with a packed local crowd, upgraded sound, and late-evening energy.",
     description:
@@ -373,6 +384,7 @@ export const EVENTS = [
     language: "Hindi, Punjabi",
     audience: "16+",
     heroGradient: "linear-gradient(135deg, #ffb199 0%, #ff0844 100%)",
+    imageUrl: "/event-images/ComedyEvents.jpg",
     shortDescription:
       "A fast stand-up night with Punjabi crowd work, family jokes, and high-energy local storytelling.",
     description:
@@ -393,6 +405,7 @@ export const EVENTS = [
     language: "Punjabi, Hindi",
     audience: "All ages",
     heroGradient: "linear-gradient(135deg, #7f7fd5 0%, #86a8e7 50%, #91eae4 100%)",
+    imageUrl: "/event-images/MusicEvent.jpg",
     shortDescription:
       "An open-air Punjabi music evening with live dhol, headline vocals, and a festival-style crowd setup.",
     description:
@@ -413,6 +426,7 @@ export const EVENTS = [
     language: "Hindi, English",
     audience: "All ages",
     heroGradient: "linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%)",
+    imageUrl: "/event-images/SportsEvent.webp",
     shortDescription:
       "A local finals day with commentary, crowd sections, and a high-noise weekend sports atmosphere.",
     description:

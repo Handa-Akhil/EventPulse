@@ -395,6 +395,8 @@ p {
   padding: 1.1rem;
   color: #fffaf4;
   background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .tag {
@@ -520,6 +522,8 @@ p {
   justify-content: end;
   gap: 0.9rem;
   background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .details-summary {
