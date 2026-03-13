@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import BookingSuccessModal from "./BookingSuccessModal";
 import {
   createBooking,
   fetchEventDetails,
@@ -12,7 +13,8 @@ export default function EventDetails() {
   const [event, setEvent] = useState(null);
   const [selectedShowtime, setSelectedShowtime] = useState("");
   const [quantity, setQuantity] = useState(2);
-  const [bookingMessage, setBookingMessage] = useState("");
+  const [bookingError, setBookingError] = useState("");
+  const [successfulBooking, setSuccessfulBooking] = useState(null);
   const [loadError, setLoadError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isBooking, setIsBooking] = useState(false);
@@ -23,7 +25,8 @@ export default function EventDetails() {
     async function loadEvent() {
       setIsLoading(true);
       setLoadError("");
-      setBookingMessage("");
+      setBookingError("");
+      setSuccessfulBooking(null);
 
       try {
         let savedLocation = null;
@@ -70,19 +73,17 @@ export default function EventDetails() {
     }
 
     setIsBooking(true);
+    setBookingError("");
 
     try {
-      const booking = await createBooking({
+      const response = await createBooking({
         eventId: event.id,
         slot: selectedShowtime,
         quantity,
       });
-
-      setBookingMessage(
-        `Booking confirmed. Reference ${booking.id.slice(-6).toUpperCase()} for ${booking.quantity} ticket(s) at ${booking.slot}.`,
-      );
+      setSuccessfulBooking(response);
     } catch (error) {
-      setBookingMessage(error.message);
+      setBookingError(error.message);
     } finally {
       setIsBooking(false);
     }
@@ -228,21 +229,17 @@ export default function EventDetails() {
             {isBooking ? "Booking..." : "Book event"}
           </button>
 
-          {bookingMessage ? (
-            <p
-              className={
-                bookingMessage.startsWith("Booking confirmed")
-                  ? "message message--success"
-                  : "message message--error"
-              }
-            >
-              {bookingMessage}
-            </p>
-          ) : null}
+          {bookingError ? <p className="message message--error">{bookingError}</p> : null}
 
           {loadError ? <p className="message message--error">{loadError}</p> : null}
         </aside>
       </section>
+
+      <BookingSuccessModal
+        booking={successfulBooking?.booking ?? null}
+        notification={successfulBooking?.notification ?? null}
+        onClose={() => setSuccessfulBooking(null)}
+      />
     </main>
   );
 }

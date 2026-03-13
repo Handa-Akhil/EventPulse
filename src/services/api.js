@@ -156,10 +156,8 @@ export async function fetchUserBookings(limit = 3) {
 }
 
 export async function createBooking(payload) {
-  const response = await request("/bookings", {
+  return request("/bookings", {
     method: "POST",
     body: payload,
   });
-
-  return response.booking;
 }

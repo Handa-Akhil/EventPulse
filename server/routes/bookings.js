@@ -2,9 +2,53 @@ import { randomUUID } from "node:crypto";
 import express from "express";
 import { getPool } from "../db/pool.js";
 import { requireAuth } from "../middleware/auth.js";
+import { sendBookingConfirmationEmail } from "../services/bookingEmail.js";
+import { getDistanceKm } from "../utils/distance.js";
 import { serializeBooking, serializeEvent } from "../utils/serializers.js";
 
 const router = express.Router();
+
+function getSuggestedEvents(events, bookedEvent, user) {
+  const preferredCategories =
+    Array.isArray(user.preferences) && user.preferences.length > 0
+      ? user.preferences
+      : null;
+
+  const withDistance = events.map((event) => ({
+    ...event,
+    distanceKm: user.savedLocation
+      ? getDistanceKm(user.savedLocation, event.coordinates)
+      : null,
+  }));
+
+  const ranked = withDistance
+    .filter((event) => event.id !== bookedEvent.id)
+    .filter((event) => !preferredCategories || preferredCategories.includes(event.category))
+    .filter((event) => !user.savedLocation || event.distanceKm <= 40)
+    .sort((left, right) => {
+      const sameCategoryScore =
+        Number(right.category === bookedEvent.category) -
+        Number(left.category === bookedEvent.category);
+
+      if (sameCategoryScore !== 0) {
+        return sameCategoryScore;
+      }
+
+      return (left.distanceKm ?? Number.MAX_SAFE_INTEGER) - (right.distanceKm ?? Number.MAX_SAFE_INTEGER);
+    });
+
+  if (ranked.length > 0) {
+    return ranked.slice(0, 4);
+  }
+
+  return withDistance
+    .filter((event) => event.id !== bookedEvent.id)
+    .sort(
+      (left, right) =>
+        (left.distanceKm ?? Number.MAX_SAFE_INTEGER) - (right.distanceKm ?? Number.MAX_SAFE_INTEGER),
+    )
+    .slice(0, 4);
+}
 
 router.get("/", requireAuth, async (req, res, next) => {
   try {
@@ -88,8 +132,22 @@ router.post("/", requireAuth, async (req, res, next) => {
       "SELECT * FROM bookings WHERE id = ? LIMIT 1",
       [bookingId],
     );
+    const booking = serializeBooking(bookingRows[0]);
 
-    res.status(201).json({ booking: serializeBooking(bookingRows[0]) });
+    const [allEventRows] = await pool.execute("SELECT * FROM events WHERE id <> ?", [event.id]);
+    const suggestedEvents = getSuggestedEvents(
+      allEventRows.map((row) => serializeEvent(row)),
+      event,
+      req.user,
+    );
+    const notification = await sendBookingConfirmationEmail({
+      user: req.user,
+      booking,
+      bookedEvent: event,
+      suggestedEvents,
+    });
+
+    res.status(201).json({ booking, notification });
   } catch (error) {
     next(error);
   }
