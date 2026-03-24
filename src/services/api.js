@@ -134,6 +134,19 @@ export async function fetchNearbyEvents(params) {
   return response.events;
 }
 
+export async function fetchRecommendedEvents(params) {
+  const response = await request(
+    `/events/recommended${buildQueryString({
+      lat: params?.lat,
+      lng: params?.lng,
+      search: params?.search,
+      rangeKm: params?.rangeKm,
+    })}`,
+  );
+
+  return response.events;
+}
+
 export async function fetchEventDetails(eventId, location) {
   const response = await request(
     `/events/${eventId}${buildQueryString({
@@ -156,8 +169,10 @@ export async function fetchUserBookings(limit = 3) {
 }
 
 export async function createBooking(payload) {
-  return request("/bookings", {
+  const response = await request("/bookings", {
     method: "POST",
     body: payload,
   });
+
+  return response.booking;
 }

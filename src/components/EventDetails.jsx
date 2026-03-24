@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import BookingSuccessModal from "./BookingSuccessModal";
 import {
   createBooking,
   fetchEventDetails,
@@ -13,8 +12,7 @@ export default function EventDetails() {
   const [event, setEvent] = useState(null);
   const [selectedShowtime, setSelectedShowtime] = useState("");
   const [quantity, setQuantity] = useState(2);
-  const [bookingError, setBookingError] = useState("");
-  const [successfulBooking, setSuccessfulBooking] = useState(null);
+  const [bookingMessage, setBookingMessage] = useState("");
   const [loadError, setLoadError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isBooking, setIsBooking] = useState(false);
@@ -25,8 +23,7 @@ export default function EventDetails() {
     async function loadEvent() {
       setIsLoading(true);
       setLoadError("");
-      setBookingError("");
-      setSuccessfulBooking(null);
+      setBookingMessage("");
 
       try {
         let savedLocation = null;
@@ -42,7 +39,11 @@ export default function EventDetails() {
         if (!ignore) {
           setEvent(eventDetails);
           setSelectedShowtime(eventDetails.showtimes[0] ?? "");
-          setQuantity(2);
+          setQuantity(
+            typeof eventDetails.seatsLeft === "number"
+              ? Math.min(2, Math.max(1, eventDetails.seatsLeft || 1))
+              : 2,
+          );
         }
       } catch (error) {
         if (!ignore) {
@@ -64,26 +65,48 @@ export default function EventDetails() {
   }, [eventId]);
 
   const adjustQuantity = (delta) => {
-    setQuantity((current) => Math.min(6, Math.max(1, current + delta)));
+    const maxTickets =
+      typeof event?.seatsLeft === "number"
+        ? Math.min(20, Math.max(1, event.seatsLeft))
+        : 20;
+
+    setQuantity((current) => Math.min(maxTickets, Math.max(1, current + delta)));
   };
 
   const handleBooking = async () => {
-    if (!event) {
+    if (!event || !selectedShowtime) {
       return;
     }
 
     setIsBooking(true);
-    setBookingError("");
 
     try {
-      const response = await createBooking({
+      const booking = await createBooking({
         eventId: event.id,
         slot: selectedShowtime,
         quantity,
       });
-      setSuccessfulBooking(response);
+
+      setBookingMessage(
+        `Booking confirmed. Reference ${booking.id.slice(-6).toUpperCase()} for ${booking.quantity} ticket(s) at ${booking.slot}.`,
+      );
+
+      if (typeof event.seatsLeft === "number") {
+        const updatedSeatsLeft = Math.max(event.seatsLeft - booking.quantity, 0);
+
+        setEvent((current) =>
+          current
+            ? {
+                ...current,
+                seatsLeft: updatedSeatsLeft,
+              }
+            : current,
+        );
+
+        setQuantity(Math.min(2, Math.max(1, updatedSeatsLeft || 1)));
+      }
     } catch (error) {
-      setBookingError(error.message);
+      setBookingMessage(error.message);
     } finally {
       setIsBooking(false);
     }
@@ -114,10 +137,13 @@ export default function EventDetails() {
     );
   }
 
+  const posterUrl = `/images/events/${event.id}.jpg`;
   const total = quantity * event.price;
-  const heroBackground = event.imageUrl
-    ? `linear-gradient(180deg, rgba(8, 6, 12, 0.1) 0%, rgba(8, 6, 12, 0.6) 100%), url("${event.imageUrl}")`
-    : event.heroGradient;
+  const isSoldOut = typeof event.seatsLeft === "number" && event.seatsLeft <= 0;
+  const maxTickets =
+    typeof event.seatsLeft === "number"
+      ? Math.min(20, Math.max(1, event.seatsLeft))
+      : 20;
 
   return (
     <main className="page-shell details-page">
@@ -133,7 +159,12 @@ export default function EventDetails() {
       <section className="details-hero panel fade-up">
         <div
           className="details-hero__visual"
-          style={{ backgroundImage: heroBackground }}
+          style={{
+            backgroundImage: `url(${posterUrl}), ${event.heroGradient}`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
         >
           <span className="tag">{event.category}</span>
           <h1>{event.title}</h1>
@@ -157,6 +188,15 @@ export default function EventDetails() {
               </span>
             ))}
           </div>
+
+          {typeof event.seatsLeft === "number" ? (
+            <p className="supporting-text">
+              {event.seatsLeft > 0
+                ? `${event.seatsLeft} seats left`
+                : "Sold out"}
+            </p>
+          ) : null}
+
           {event.distanceKm !== null && event.distanceKm !== undefined ? (
             <p className="supporting-text">
               Approx. {event.distanceKm.toFixed(1)} km from your selected location.
@@ -175,6 +215,12 @@ export default function EventDetails() {
             <li>Date: {event.dateLabel}</li>
             <li>Language: {event.language}</li>
             <li>Audience: {event.audience}</li>
+            {typeof event.seatCapacity === "number" ? (
+              <li>Total seats: {event.seatCapacity}</li>
+            ) : null}
+            {typeof event.seatsLeft === "number" ? (
+              <li>Seats left: {event.seatsLeft}</li>
+            ) : null}
           </ul>
         </article>
 
@@ -188,6 +234,7 @@ export default function EventDetails() {
               {event.showtimes.map((showtime) => (
                 <button
                   className={selectedShowtime === showtime ? "chip is-active" : "chip"}
+                  disabled={isSoldOut}
                   key={showtime}
                   onClick={() => setSelectedShowtime(showtime)}
                   type="button"
@@ -201,15 +248,32 @@ export default function EventDetails() {
           <div className="booking-block">
             <span>Tickets</span>
             <div className="quantity-control">
-              <button className="chip" onClick={() => adjustQuantity(-1)} type="button">
+              <button
+                className="chip"
+                disabled={isSoldOut || quantity <= 1}
+                onClick={() => adjustQuantity(-1)}
+                type="button"
+              >
                 -
               </button>
               <strong>{quantity}</strong>
-              <button className="chip" onClick={() => adjustQuantity(1)} type="button">
+              <button
+                className="chip"
+                disabled={isSoldOut || quantity >= maxTickets}
+                onClick={() => adjustQuantity(1)}
+                type="button"
+              >
                 +
               </button>
             </div>
           </div>
+
+          {typeof event.seatsLeft === "number" ? (
+            <div className="pricing-row">
+              <span>Availability</span>
+              <strong>{event.seatsLeft > 0 ? `${event.seatsLeft} left` : "Sold out"}</strong>
+            </div>
+          ) : null}
 
           <div className="pricing-row">
             <span>Price per ticket</span>
@@ -222,24 +286,28 @@ export default function EventDetails() {
 
           <button
             className="button button--primary"
-            disabled={isBooking}
+            disabled={isBooking || isSoldOut || !selectedShowtime}
             onClick={() => void handleBooking()}
             type="button"
           >
-            {isBooking ? "Booking..." : "Book event"}
+            {isBooking ? "Booking..." : isSoldOut ? "Sold out" : "Book event"}
           </button>
 
-          {bookingError ? <p className="message message--error">{bookingError}</p> : null}
+          {bookingMessage ? (
+            <p
+              className={
+                bookingMessage.startsWith("Booking confirmed")
+                  ? "message message--success"
+                  : "message message--error"
+              }
+            >
+              {bookingMessage}
+            </p>
+          ) : null}
 
           {loadError ? <p className="message message--error">{loadError}</p> : null}
         </aside>
       </section>
-
-      <BookingSuccessModal
-        booking={successfulBooking?.booking ?? null}
-        notification={successfulBooking?.notification ?? null}
-        onClose={() => setSuccessfulBooking(null)}
-      />
     </main>
   );
 }
