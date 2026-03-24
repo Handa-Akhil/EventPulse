@@ -1,6 +1,14 @@
+import http from "http";
+import { Server } from "socket.io";
+
 import { createApp } from "./app.js";
 import { config } from "./config.js";
 import { initDatabase } from "./db/initDatabase.js";
+import { sequelize } from "./models/index.js";
+
+let io;
+
+export { io };
 
 function getStartupHint(error) {
   if (error.code === "ER_ACCESS_DENIED_ERROR") {
@@ -15,10 +23,23 @@ function getStartupHint(error) {
 }
 
 async function startServer() {
+  await sequelize.authenticate();
   await initDatabase();
 
   const app = createApp();
-  app.listen(config.port, () => {
+  const server = http.createServer(app);
+
+  io = new Server(server, {
+    cors: {
+      origin: config.clientOrigin,
+    },
+  });
+
+  io.on("connection", (socket) => {
+    console.log("User connected:", socket.id);
+  });
+
+  server.listen(config.port, () => {
     console.log(`EventPulse API listening on http://127.0.0.1:${config.port}`);
   });
 }
