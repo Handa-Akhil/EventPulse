@@ -229,4 +229,6 @@ export default function AuthPage({ onLogin, onSignup }) {
       </section>
     </main>
   );
+
+  
 }
