@@ -24,5 +24,6 @@ export function getDistanceKm(from, to) {
   const centralAngle =
     2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
 
+    
   return EARTH_RADIUS_KM * centralAngle;
 }

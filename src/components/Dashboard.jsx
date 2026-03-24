@@ -11,6 +11,7 @@ import { CITY_OPTIONS, DEFAULT_CITY } from "../data/events";
 import { fetchCurrentLocation } from "../utils/geo";
 import {
   fetchNearbyEvents,
+  fetchRecommendedEvents,
   fetchSavedLocation,
   fetchUserBookings,
   saveUserLocation,
@@ -19,12 +20,15 @@ import {
 export default function Dashboard({ currentUser, onLogout }) {
   const [location, setLocation] = useState(currentUser.savedLocation ?? null);
   const [events, setEvents] = useState([]);
+  const [recommendedEvents, setRecommendedEvents] = useState([]);
   const [recentBookings, setRecentBookings] = useState([]);
   const [locationError, setLocationError] = useState("");
   const [eventsError, setEventsError] = useState("");
+  const [recommendedError, setRecommendedError] = useState("");
   const [bookingsError, setBookingsError] = useState("");
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [isLoadingRecommended, setIsLoadingRecommended] = useState(false);
   const [isLoadingBookings, setIsLoadingBookings] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -114,6 +118,48 @@ export default function Dashboard({ currentUser, onLogout }) {
     attemptedLocationRef.current = true;
     void detectLocation();
   }, [location]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadRecommendedEvents() {
+      if (!location) {
+        setRecommendedEvents([]);
+        return;
+      }
+
+      setRecommendedError("");
+      setIsLoadingRecommended(true);
+
+      try {
+        const recommended = await fetchRecommendedEvents({
+          lat: location.lat,
+          lng: location.lng,
+          search: deferredSearch.trim(),
+          rangeKm: 40,
+        });
+
+        if (!ignore) {
+          setRecommendedEvents(recommended);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setRecommendedEvents([]);
+          setRecommendedError(error.message);
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoadingRecommended(false);
+        }
+      }
+    }
+
+    void loadRecommendedEvents();
+
+    return () => {
+      ignore = true;
+    };
+  }, [deferredSearch, location?.lat, location?.lng]);
 
   useEffect(() => {
     let ignore = false;
@@ -253,8 +299,8 @@ export default function Dashboard({ currentUser, onLogout }) {
 
         <div className="hero-panel__metrics">
           <article className="metric-card">
-            <strong>{events.length}</strong>
-            <span>matching events nearby</span>
+            <strong>{recommendedEvents.length}</strong>
+            <span>recommended events</span>
           </article>
           <article className="metric-card">
             <strong>{preferenceList.length}</strong>
@@ -265,6 +311,37 @@ export default function Dashboard({ currentUser, onLogout }) {
             <span>recent MySQL-backed bookings</span>
           </article>
         </div>
+      </section>
+
+      <section className="section fade-up">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">Personalized for the signed-in user</span>
+            <h2>Recommended for you</h2>
+          </div>
+        </div>
+
+        {recommendedError ? (
+          <p className="message message--error">{recommendedError}</p>
+        ) : null}
+
+        {isLoadingRecommended ? (
+          <div className="empty-state panel">
+            <h3>Loading recommendations...</h3>
+            <p>Finding events based on your bookings and interests.</p>
+          </div>
+        ) : recommendedEvents.length > 0 ? (
+          <div className="event-grid">
+            {recommendedEvents.map((event) => (
+              <EventCard event={event} key={event.id} />
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state panel">
+            <h3>No recommendations yet.</h3>
+            <p>Book a few events or set preferences to see personalized suggestions.</p>
+          </div>
+        )}
       </section>
 
       <section className="section fade-up">

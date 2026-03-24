@@ -3,6 +3,9 @@ async function reverseGeocode(lat, lng) {
     `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
   );
 
+
+
+  
   if (!response.ok) {
     throw new Error("Could not resolve the current city.");
   }

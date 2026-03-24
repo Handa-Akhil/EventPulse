@@ -25,6 +25,7 @@ export const PREFERENCE_OPTIONS = [
     description: "Plays, musicals, and stage experiences.",
   },
   {
+    
     value: "Festivals",
     label: "Festivals",
     description: "Food fairs, city festivals, and cultural events.",

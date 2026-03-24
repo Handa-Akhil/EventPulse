@@ -72,11 +72,11 @@ export default function PreferenceModal({
 
         <div className="modal-actions">
           <p className="supporting-text">
-            Select at least one preference to continue.
+            Select at least two preferences to continue.
           </p>
           <button
             className="button button--primary"
-            disabled={selected.length === 0 || isSaving}
+            disabled={selected.length < 2 || isSaving}
             onClick={handleSave}
             type="button"
           >
