@@ -176,3 +176,12 @@ export async function createBooking(payload) {
 
   return response.booking;
 }
+
+export async function createUserEvent(payload) {
+  const response = await request("/events", {
+    method: "POST",
+    body: payload,
+  });
+
+  return response;
+}

@@ -1,4 +1,4 @@
-import { sequelize } from "../../server/db/sequelize.js";
+import { sequelize } from "../db/sequelize.js";
 import { User } from "./User.js";
 import { Event } from "./Event.js";
 import { Booking } from "./Booking.js";

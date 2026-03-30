@@ -4,6 +4,10 @@ import AuthPage from "./components/AuthPage";
 import Dashboard from "./components/Dashboard";
 import EventDetails from "./components/EventDetails";
 import PreferenceModal from "./components/PreferenceModal";
+import AdminPanel from "./components/AdminPanel";
+import AdminLogin from "./components/AdminLogin";
+import CreateEvent from "./components/CreateEvent";
+
 import {
   getSessionUser,
   loginUser,
@@ -11,6 +15,7 @@ import {
   registerUser,
   updateUserPreferences,
 } from "./services/api";
+
 
 function ProtectedRoute({ currentUser, children }) {
   if (!currentUser) {
@@ -24,6 +29,21 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isPreferenceOpen, setIsPreferenceOpen] = useState(false);
+
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(
+    () => localStorage.getItem("adminLoggedIn") === "true"
+  );
+
+  const handleAdminLogin = () => {
+    setIsAdminLoggedIn(true);
+    localStorage.setItem("adminLoggedIn", "true");
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdminLoggedIn(false);
+    localStorage.removeItem("adminLoggedIn");
+  };
+
 
   useEffect(() => {
     let ignore = false;
@@ -75,14 +95,13 @@ export default function App() {
   };
 
   const handleSavePreferences = async (preferences) => {
-    if (!currentUser) {
-      return;
-    }
+    if (!currentUser) return;
 
     const updatedUser = await updateUserPreferences(preferences);
     setCurrentUser(updatedUser);
   };
 
+  
   if (isBootstrapping) {
     return (
       <main className="page-shell auth-page">
@@ -97,6 +116,7 @@ export default function App() {
   return (
     <>
       <Routes>
+        {/* 🔐 AUTH PAGE */}
         <Route
           path="/auth"
           element={
@@ -107,6 +127,8 @@ export default function App() {
             )
           }
         />
+
+        {/* 🏠 DASHBOARD */}
         <Route
           path="/"
           element={
@@ -115,6 +137,8 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* 🎫 EVENT DETAILS */}
         <Route
           path="/events/:eventId"
           element={
@@ -123,12 +147,49 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* 🆕 CREATE EVENT USER */}
+        <Route
+          path="/create-event"
+          element={
+            <ProtectedRoute currentUser={currentUser}>
+              <CreateEvent />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 🔥 ADMIN LOGIN */}
+        <Route
+          path="/admin/login"
+          element={
+            isAdminLoggedIn ? (
+              <Navigate to="/admin" replace />
+            ) : (
+              <AdminLogin onLogin={handleAdminLogin} />
+            )
+          }
+        />
+
+        {/* 🔥 ADMIN PANEL */}
+        <Route
+          path="/admin"
+          element={
+            isAdminLoggedIn ? (
+              <AdminPanel onLogout={handleAdminLogout} />
+            ) : (
+              <Navigate to="/admin/login" replace />
+            )
+          }
+        />
+
+        {/* 🔁 FALLBACK */}
         <Route
           path="*"
           element={<Navigate to={currentUser ? "/" : "/auth"} replace />}
         />
       </Routes>
 
+      {/* 🎯 PREFERENCE MODAL */}
       <PreferenceModal
         initialSelected={currentUser?.preferences ?? []}
         open={isPreferenceOpen}

@@ -4,6 +4,7 @@ import authRouter from "./routes/auth.js";
 import userRouter from "./routes/users.js";
 import eventRouter from "./routes/events.js";
 import bookingRouter from "./routes/bookings.js";
+import adminRoutes from "./routes/admin.js";
 
 export function createApp() {
   const app = express();
@@ -20,14 +21,15 @@ export function createApp() {
   app.use("/api/events", eventRouter);
   app.use("/api/bookings", bookingRouter);
 
+ 
+  app.use("/api/admin", adminRoutes);
+
   app.use((error, req, res, next) => {
     console.error(error);
     res.status(500).json({
       message: "Unexpected server error.",
     });
   });
-
-
 
   return app;
 }

@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import { sequelize } from "../../server/db/sequelize.js";
+import { sequelize } from "../db/sequelize.js";
 
 export const Event = sequelize.define(
   "Event",
@@ -87,6 +87,19 @@ export const Event = sequelize.define(
       type: DataTypes.TEXT("long"),
       allowNull: false,
     },
+
+    // 🔥 NEW FIELD: EVENT STATUS
+    status: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: "pending", // pending | approved | rejected
+    },
+
+    // 🔥 NEW FIELD: CREATOR EMAIL (for admin rejection email)
+    created_by_email: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
   },
   {
     tableName: "events",
@@ -94,5 +107,5 @@ export const Event = sequelize.define(
     timestamps: true,
     createdAt: "created_at",
     updatedAt: "updated_at",
-  },
+  }
 );

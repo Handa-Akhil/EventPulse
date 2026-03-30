@@ -225,6 +225,17 @@ export default function AuthPage({ onLogin, onSignup }) {
             First-time signup opens a preference popup so the dashboard can be
             tailored immediately. Returning users can log in directly.
           </p>
+
+          <div style={{ marginTop: "24px", paddingTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.1)", textAlign: "center" }}>
+            <p className="eyebrow" style={{ marginBottom: "12px" }}>Platform Moderation</p>
+            <button 
+              className="button button--secondary" 
+              onClick={() => navigate("/admin/login")}
+              style={{ width: "100%", justifyContent: "center" }}
+            >
+              👑 Admin Login
+            </button>
+          </div>
         </div>
       </section>
     </main>

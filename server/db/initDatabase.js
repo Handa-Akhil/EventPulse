@@ -78,6 +78,11 @@ export async function initDatabase() {
   }
 
   await ensureColumnExists(pool, "events", "image_url", "TEXT NULL AFTER hero_gradient");
+  await ensureColumnExists(pool, "events", "total_seats", "INT NULL");
+  await ensureColumnExists(pool, "events", "remaining_seats", "INT NULL");
+  await ensureColumnExists(pool, "events", "event_date", "DATETIME NULL");
+  await ensureColumnExists(pool, "events", "status", "VARCHAR(20) DEFAULT 'approved'");
+  await ensureColumnExists(pool, "events", "created_by_email", "VARCHAR(255) NULL");
 
   const upsertStatement = `
     INSERT INTO events (

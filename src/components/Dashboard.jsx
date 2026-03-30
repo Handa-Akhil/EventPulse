@@ -239,7 +239,10 @@ export default function Dashboard({ currentUser, onLogout }) {
           </div>
         </div>
 
-        <div className="topbar__actions">
+        <div className="topbar__actions" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <Link to="/create-event" className="button button--primary" style={{ padding: "8px 16px" }}>
+            + Create Event
+          </Link>
           <div className="topbar__user">
             <strong>{currentUser.name}</strong>
             <span>{currentUser.email}</span>
