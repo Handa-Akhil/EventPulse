@@ -11,7 +11,7 @@ router.post("/signup", async (req, res, next) => {
   try {
     const name = String(req.body?.name || "").trim();
     const email = String(req.body?.email || "").trim().toLowerCase();
-    const password = String(req.body?.password || "");
+    const password = String(req.body?.password || "").trim();
 
     if (name.length < 2) {
       res.status(400).json({ message: "Please enter a valid full name." });
@@ -58,6 +58,11 @@ router.post("/signup", async (req, res, next) => {
       "SELECT * FROM users WHERE id = ? LIMIT 1",
       [userId],
     );
+
+    if (!rows || rows.length === 0) {
+      return res.status(500).json({ message: "Failed to create user account." });
+    }
+
     const user = serializeUser(rows[0]);
     const token = createAuthToken(user.id);
 
@@ -70,7 +75,13 @@ router.post("/signup", async (req, res, next) => {
 router.post("/login", async (req, res, next) => {
   try {
     const email = String(req.body?.email || "").trim().toLowerCase();
-    const password = String(req.body?.password || "");
+    const password = String(req.body?.password || "").trim();
+
+    if (!email || !password) {
+      res.status(400).json({ message: "Email and password are required." });
+      return;
+    }
+
     const pool = await getPool();
     const [rows] = await pool.execute(
       "SELECT * FROM users WHERE email = ? LIMIT 1",

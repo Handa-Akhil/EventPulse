@@ -25,7 +25,15 @@ export function createApp() {
   app.use("/api/admin", adminRoutes);
 
   app.use((error, req, res, next) => {
-    console.error(error);
+    console.error("API Error:", {
+      message: error.message,
+      code: error.code,
+      status: error.status,
+      path: req.path,
+      method: req.method,
+    });
+    console.error(error.stack);
+
     res.status(500).json({
       message: "Unexpected server error.",
     });

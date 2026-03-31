@@ -25,9 +25,16 @@ async function request(path, options = {}) {
   });
 
   const contentType = response.headers.get("content-type") || "";
-  const payload = contentType.includes("application/json")
-    ? await response.json()
-    : await response.text();
+  let payload;
+  
+  try {
+    payload = contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
+  } catch (error) {
+    console.error("Failed to parse response:", error);
+    throw new Error("Server returned invalid response format");
+  }
 
   if (!response.ok) {
     if (response.status === 401) {
@@ -37,8 +44,9 @@ async function request(path, options = {}) {
     const message =
       typeof payload === "object" && payload && "message" in payload
         ? payload.message
-        : "Request failed.";
+        : `Request failed (${response.status})`;
 
+    console.error("API Error:", { status: response.status, path, message, payload });
     throw new Error(message);
   }
 

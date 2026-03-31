@@ -61,9 +61,20 @@ export default function Dashboard({ currentUser, onLogout }) {
         await persistLocation(DEFAULT_CITY);
       }
 
-      setLocationError(
-        `${error.message} Showing ${fallbackLocation.city} until you pick another city.`,
-      );
+      // Better error messages for different scenarios
+      if (error.message.includes("permission")) {
+        setLocationError(
+          `Location permission denied. To enable: Click the lock icon in your browser's address bar → Site settings → Allow location access. Then try again.`,
+        );
+      } else if (error.message.includes("unavailable")) {
+        setLocationError(error.message);
+      } else if (error.message.includes("timeout")) {
+        setLocationError(error.message);
+      } else {
+        setLocationError(
+          `${error.message} Using ${fallbackLocation.city} instead.`,
+        );
+      }
     } finally {
       setIsResolvingLocation(false);
     }
@@ -115,9 +126,17 @@ export default function Dashboard({ currentUser, onLogout }) {
       return;
     }
 
+    // Don't auto-detect location on first load
+    // Instead, just set to default city and let user choose
+    if (!currentUser.savedLocation) {
+      attemptedLocationRef.current = true;
+      setLocation(DEFAULT_CITY);
+      return;
+    }
+
     attemptedLocationRef.current = true;
     void detectLocation();
-  }, [location]);
+  }, [location, currentUser.savedLocation]);
 
   useEffect(() => {
     let ignore = false;

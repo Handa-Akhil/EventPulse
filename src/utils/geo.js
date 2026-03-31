@@ -53,16 +53,31 @@ export function fetchCurrentLocation() {
         }
       },
       (error) => {
+        console.error("Geolocation error code:", error.code, "message:", error.message);
+        
         if (error.code === 1) {
-          reject(new Error("Location permission denied."));
+          // Permission denied
+          reject(new Error("Location permission denied. Please select your city from the dropdown or enable location access in browser settings."));
+          return;
+        }
+
+        if (error.code === 2) {
+          // Position unavailable
+          reject(new Error("Location is currently unavailable. Please try again or select your city manually."));
+          return;
+        }
+
+        if (error.code === 3) {
+          // Timeout
+          reject(new Error("Location request timed out. Please try again or select your city manually."));
           return;
         }
 
         reject(new Error("Unable to fetch the current location."));
       },
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
+        enableHighAccuracy: false,
+        timeout: 8000,
         maximumAge: 300000,
       },
     );
