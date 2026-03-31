@@ -1,7 +1,7 @@
 import { EVENTS } from "../../src/data/events.js";
 import { config } from "../config.js";
 import { getPool } from "./pool.js";
-
+// check
 const TABLE_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(36) PRIMARY KEY,
