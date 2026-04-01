@@ -7,6 +7,7 @@ import PreferenceModal from "./components/PreferenceModal";
 import AdminPanel from "./components/AdminPanel";
 import AdminLogin from "./components/AdminLogin";
 import CreateEvent from "./components/CreateEvent";
+import MyTickets from "./components/MyTickets";
 
 import {
   getSessionUser,
@@ -154,6 +155,16 @@ export default function App() {
           element={
             <ProtectedRoute currentUser={currentUser}>
               <CreateEvent />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 🎟️ MY TICKETS */}
+        <Route
+          path="/my-tickets"
+          element={
+            <ProtectedRoute currentUser={currentUser}>
+              <MyTickets />
             </ProtectedRoute>
           }
         />

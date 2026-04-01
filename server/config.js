@@ -1,7 +1,12 @@
-
+import path from "path";
+import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from the project root (parent of 'server' directory)
+dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
 function toNumber(value, fallbackValue) {
   const parsed = Number.parseInt(value ?? "", 10);
@@ -24,15 +29,15 @@ export const config = {
     host: process.env.DB_HOST || "127.0.0.1",
     port: toNumber(process.env.DB_PORT, 3306),
     user: process.env.DB_USER || "root",
-    password: process.env.DB_PASSWORD || "",
-    name: process.env.DB_NAME || "eventpulse",
+    password: "anmol@123",
+    name: process.env.DB_NAME || "travel_platform",
   },
   mail: {
-    host: process.env.SMTP_HOST || "",
-    port: toNumber(process.env.SMTP_PORT, 587),
-    secure: toBoolean(process.env.SMTP_SECURE, false),
-    user: process.env.SMTP_USER || "",
-    pass: process.env.SMTP_PASS || "",
-    from: process.env.MAIL_FROM || "",
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: toNumber(process.env.SMTP_PORT, 465),
+    secure: toBoolean(process.env.SMTP_SECURE, true),
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+    from: process.env.MAIL_FROM || `EventPulse <${process.env.SMTP_USER}>`,
   },
 };

@@ -7,6 +7,10 @@ import {
 } from "react";
 import { Link } from "react-router-dom";
 import EventCard from "./EventCard";
+import ThemeToggle from "./ThemeToggle";
+import NotificationBell from "./NotificationBell";
+import EventCalendar from "./EventCalendar";
+import EventMap from "./EventMap";
 import { CITY_OPTIONS, DEFAULT_CITY } from "../data/events";
 import { fetchCurrentLocation } from "../utils/geo";
 import {
@@ -15,7 +19,9 @@ import {
   fetchSavedLocation,
   fetchUserBookings,
   saveUserLocation,
+  createNotification,
 } from "../services/api";
+import socket, { connectSocket } from "../socket";
 
 export default function Dashboard({ currentUser, onLogout }) {
   const [location, setLocation] = useState(currentUser.savedLocation ?? null);
@@ -36,6 +42,9 @@ export default function Dashboard({ currentUser, onLogout }) {
   const attemptedLocationRef = useRef(Boolean(currentUser.savedLocation));
   const preferenceList = currentUser.preferences ?? [];
   const categories = ["All", ...preferenceList];
+
+  // New feature states
+  const [viewMode, setViewMode] = useState("grid"); // grid | calendar | map
 
   const persistLocation = async (nextLocation) => {
     setLocation(nextLocation);
@@ -61,7 +70,6 @@ export default function Dashboard({ currentUser, onLogout }) {
         await persistLocation(DEFAULT_CITY);
       }
 
-      // Better error messages for different scenarios
       if (error.message.includes("permission")) {
         setLocationError(
           `Location permission denied. To enable: Click the lock icon in your browser's address bar → Site settings → Allow location access. Then try again.`,
@@ -126,8 +134,6 @@ export default function Dashboard({ currentUser, onLogout }) {
       return;
     }
 
-    // Don't auto-detect location on first load
-    // Instead, just set to default city and let user choose
     if (!currentUser.savedLocation) {
       attemptedLocationRef.current = true;
       setLocation(DEFAULT_CITY);
@@ -258,21 +264,35 @@ export default function Dashboard({ currentUser, onLogout }) {
           </div>
         </div>
 
-        <div className="topbar__actions" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <Link to="/create-event" className="button button--primary" style={{ padding: "8px 16px" }}>
-            + Create Event
-          </Link>
-          <div className="topbar__user">
-            <strong>{currentUser.name}</strong>
-            <span>{currentUser.email}</span>
+        <div className="topbar__actions">
+          <div className="topbar__group">
+            <ThemeToggle />
+            <NotificationBell />
           </div>
-          <button
-            className="button button--ghost"
-            onClick={() => void onLogout()}
-            type="button"
-          >
-            Logout
-          </button>
+
+          <div className="topbar__group">
+            <Link to="/my-tickets" className="button button--ghost topbar__btn">
+              🎫 <span className="topbar__btn-label">Tickets</span>
+            </Link>
+            <Link to="/create-event" className="button button--primary topbar__btn">
+              + <span className="topbar__btn-label">Create Event</span>
+            </Link>
+          </div>
+
+          <div className="topbar__group topbar__user-zone">
+            <div className="topbar__user">
+              <strong>{currentUser.name}</strong>
+              <span className="text-clamp--1">{currentUser.email}</span>
+            </div>
+            <button
+              className="button button--ghost button--icon"
+              onClick={() => void onLogout()}
+              type="button"
+              title="Logout"
+            >
+              🚪
+            </button>
+          </div>
         </div>
       </header>
 
@@ -335,6 +355,7 @@ export default function Dashboard({ currentUser, onLogout }) {
         </div>
       </section>
 
+
       <section className="section fade-up">
         <div className="section-heading">
           <div>
@@ -355,7 +376,10 @@ export default function Dashboard({ currentUser, onLogout }) {
         ) : recommendedEvents.length > 0 ? (
           <div className="event-grid">
             {recommendedEvents.map((event) => (
-              <EventCard event={event} key={event.id} />
+              <EventCard
+                event={event}
+                key={event.id}
+              />
             ))}
           </div>
         ) : (
@@ -393,6 +417,30 @@ export default function Dashboard({ currentUser, onLogout }) {
               {category}
             </button>
           ))}
+
+          {/* View mode toggles */}
+          <span className="view-mode-separator">|</span>
+          <button
+            className={`chip ${viewMode === "grid" ? "is-active" : ""}`}
+            onClick={() => setViewMode("grid")}
+            type="button"
+          >
+            📋 Grid
+          </button>
+          <button
+            className={`chip ${viewMode === "calendar" ? "is-active" : ""}`}
+            onClick={() => setViewMode("calendar")}
+            type="button"
+          >
+            📅 Calendar
+          </button>
+          <button
+            className={`chip ${viewMode === "map" ? "is-active" : ""}`}
+            onClick={() => setViewMode("map")}
+            type="button"
+          >
+            🗺️ Map
+          </button>
         </div>
 
         {eventsError ? <p className="message message--error">{eventsError}</p> : null}
@@ -402,10 +450,17 @@ export default function Dashboard({ currentUser, onLogout }) {
             <h3>Loading nearby events...</h3>
             <p>Fetching personalized results from the backend.</p>
           </div>
+        ) : viewMode === "calendar" ? (
+          <EventCalendar events={events} />
+        ) : viewMode === "map" ? (
+          <EventMap events={events} userLocation={location} />
         ) : events.length > 0 ? (
           <div className="event-grid">
             {events.map((event) => (
-              <EventCard event={event} key={event.id} />
+              <EventCard
+                event={event}
+                key={event.id}
+              />
             ))}
           </div>
         ) : (

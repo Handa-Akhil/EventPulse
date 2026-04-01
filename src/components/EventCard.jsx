@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
+import ShareButton from "./ShareButton";
+import { StarDisplay } from "./ReviewSection";
 
-export default function EventCard({ event }) {
+export default function EventCard({ event, averageRating = 0 }) {
   const posterUrl = `/images/events/${event.id}.jpg`;
 
   return (
@@ -14,24 +16,30 @@ export default function EventCard({ event }) {
           backgroundRepeat: "no-repeat",
         }}
       >
-        <span className="tag">{event.category}</span>
-        <div>
-          <p>{event.city}</p>
-          <strong>{event.dateLabel}</strong>
+        <div className="text-clamp--1" style={{ width: '100%' }}>
+          <p className="text-clamp--1">{event.city}</p>
+          <strong className="text-clamp--1">{event.dateLabel}</strong>
         </div>
       </div>
 
       <div className="event-card__body">
         <div className="event-card__meta">
-          <h3>{event.title}</h3>
-          <span>
+          <h3 className="event-card__title text-clamp--1" title={event.title}>{event.title}</h3>
+          <span className="text-clamp--1">
             {typeof event.distanceKm === "number"
               ? `${event.distanceKm.toFixed(1)} km away`
               : "Distance unavailable"}
           </span>
         </div>
 
-        <p>{event.shortDescription}</p>
+        {averageRating > 0 && (
+          <div className="event-card__rating">
+            <StarDisplay rating={Math.round(averageRating)} size="0.85rem" />
+            <span>{averageRating}</span>
+          </div>
+        )}
+
+        <p className="text-clamp">{event.shortDescription}</p>
 
         {event.recommendationReason ? (
           <p className="event-card__reason">{event.recommendationReason}</p>
@@ -46,13 +54,15 @@ export default function EventCard({ event }) {
         ) : null}
 
         <div className="event-card__footer">
-          <div>
+          <div className="event-card__pricing text-clamp--1">
             <strong>Rs. {event.price}</strong>
-            <span>{event.venue}</span>
+            <span className="text-clamp--1" title={event.venue}>{event.venue}</span>
           </div>
-          <Link className="button button--ghost" to={`/events/${event.id}`}>
-            View details
-          </Link>
+          <div className="event-card__actions">
+            <Link className="button button--ghost" to={`/events/${event.id}`}>
+              View details
+            </Link>
+          </div>
         </div>
       </div>
     </article>

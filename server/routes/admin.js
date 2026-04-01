@@ -1,6 +1,6 @@
 import express from "express";
 import { getPool } from "../db/pool.js";
-import { sendEmail } from "../utils/email.js";
+import { sendEmail } from "../services/emailService.js";
 import { randomUUID } from "crypto";
 
 const router = express.Router();
@@ -76,11 +76,16 @@ router.post("/approve/:id", async (req, res, next) => {
     );
 
     if (event.created_by_email) {
-      await sendEmail(
-        event.created_by_email,
-        "Your Event has been Approved!",
-        `Great news! Your event "${event.title}" has been approved and is now live on EventPulse.`
-      );
+      try {
+        await sendEmail(
+          event.created_by_email,
+          "Your Event has been Approved!",
+          `Great news! Your event "${event.title}" has been approved and is now live on EventPulse.`
+        );
+      } catch (emailError) {
+        console.error(`⚠️  Email notification failed for ${event.created_by_email}:`, emailError.message);
+        // Don't fail the approval - email is non-critical
+      }
     }
 
     res.json({ message: "Event approved successfully" });
@@ -112,11 +117,16 @@ router.post("/reject/:id", async (req, res, next) => {
     );
 
     if (event.created_by_email) {
-      await sendEmail(
-        event.created_by_email,
-        "Update regarding your Event Submission",
-        `Hi there, your event "${event.title}" was not approved. \n\nReason: ${reason || "No reason provided."}\n\nPlease update your event details or contact support.`
-      );
+      try {
+        await sendEmail(
+          event.created_by_email,
+          "Update regarding your Event Submission",
+          `Hi there, your event "${event.title}" was not approved. \n\nReason: ${reason || "No reason provided."}\n\nPlease update your event details or contact support.`
+        );
+      } catch (emailError) {
+        console.error(`⚠️  Email notification failed for ${event.created_by_email}:`, emailError.message);
+        // Don't fail the rejection - email is non-critical
+      }
     }
 
     console.log(`Rejected Event ${req.params.id}: ${reason}`);

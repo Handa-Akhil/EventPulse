@@ -202,6 +202,26 @@ const TABLE_STATEMENTS = [
     CONSTRAINT bookings_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT bookings_event_fk FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
   )`,
+  `CREATE TABLE IF NOT EXISTS reviews (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
+    event_id VARCHAR(80) NOT NULL,
+    rating INT NOT NULL,
+    comment TEXT NULL,
+    user_name VARCHAR(120) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT reviews_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT reviews_event_fk FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+  )`,
+  `CREATE TABLE IF NOT EXISTS notifications (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(40) NOT NULL DEFAULT 'info',
+    is_read TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT notifications_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`,
 ];
 
 async function ensureColumnExists(pool, tableName, columnName, definition) {

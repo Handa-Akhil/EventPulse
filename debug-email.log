@@ -1,0 +1,26 @@
+[2026-04-01T03:25:50.996Z] ❌ Email sending failed to tester_new@example.com: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2b242680132sm135264435ad.32 - gsmtp
+[2026-04-01T03:46:57.729Z] ❌ Email sending failed to singh.anmol5@icloud.com: getaddrinfo EAI_AGAIN smtp.gmail.com
+[2026-04-01T03:49:49.401Z] ❌ Email sending failed to singh.anmol5@icloud.com: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2b2427c5f5bsm133914835ad.82 - gsmtp
+[2026-04-01T07:00:29.515Z] ❌ Email sending failed to tester_new@example.com: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2b24265aafbsm171340685ad.19 - gsmtp
+[2026-04-01T07:02:41.679Z] ❌ Email sending failed to tester_new@example.com: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-82ca843b818sm15816890b3a.6 - gsmtp
+[2026-04-01T07:08:57.768Z] ❌ Email sending failed to singh.anmol5@icloud.com: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-2b242766219sm136354315ad.53 - gsmtp
+[2026-04-01T10:20:19.156Z] ❌ Email sending failed to anmol@gmail: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-82cefa82b24sm1724613b3a.31 - gsmtp
+Error Stack: EAUTH
+[2026-04-01T13:01:15.579Z] ❌ Email sending failed to anmol@gmail: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 41be03b00d2f7-c769e0c591asm9339396a12.27 - gsmtp
+Error Stack: EAUTH
+[2026-04-01T13:03:56.660Z] ❌ Email sending failed to anmol@gmail: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-35dbb818238sm2596739a91.4 - gsmtp
+Error Stack: EAUTH
+[2026-04-01T13:13:34.124Z] ❌ Email sending failed to anmol@gmail: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials d2e1a72fcca58-82cec9c4cfcsm2610402b3a.5 - gsmtp
+Error Stack: EAUTH
+[2026-04-01T13:38:33.943Z] ❌ Email sending failed to anmol@gmail: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-35dbe608062sm4874038a91.2 - gsmtp
+Error Stack: EAUTH

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -6,6 +5,10 @@ import {
   fetchEventDetails,
   fetchSavedLocation,
 } from "../services/api";
+import ShareButton from "./ShareButton";
+import ReviewSection from "./ReviewSection";
+import LiveCounter from "./LiveCounter";
+import ETicket from "./ETicket";
 
 export default function EventDetails() {
   const navigate = useNavigate();
@@ -17,6 +20,14 @@ export default function EventDetails() {
   const [loadError, setLoadError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isBooking, setIsBooking] = useState(false);
+
+  // E-Ticket state
+  const [showTicket, setShowTicket] = useState(false);
+  const [ticketBooking, setTicketBooking] = useState(null);
+  const [ticketQr, setTicketQr] = useState(null);
+
+  // Get current user ID from token
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
     let ignore = false;
@@ -65,6 +76,17 @@ export default function EventDetails() {
     };
   }, [eventId]);
 
+  // Extract user ID from JWT for review checking
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem("eventpulse_session_token_v1");
+      if (token) {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setCurrentUserId(payload.userId);
+      }
+    } catch {}
+  }, []);
+
   const adjustQuantity = (delta) => {
     const maxTickets =
       typeof event?.seatsLeft === "number"
@@ -82,11 +104,14 @@ export default function EventDetails() {
     setIsBooking(true);
 
     try {
-      const booking = await createBooking({
+      const response = await createBooking({
         eventId: event.id,
         slot: selectedShowtime,
         quantity,
       });
+
+      const booking = response.booking;
+      const qrDataUrl = response.qrDataUrl;
 
       setBookingMessage(
         `Booking confirmed. Reference ${booking.id.slice(-6).toUpperCase()} for ${booking.quantity} ticket(s) at ${booking.slot}.`,
@@ -106,6 +131,11 @@ export default function EventDetails() {
 
         setQuantity(Math.min(2, Math.max(1, updatedSeatsLeft || 1)));
       }
+
+      // Show e-ticket
+      setTicketBooking(booking);
+      setTicketQr(qrDataUrl);
+      setShowTicket(true);
     } catch (error) {
       setBookingMessage(error.message);
     } finally {
@@ -152,9 +182,11 @@ export default function EventDetails() {
         <button className="button button--ghost" onClick={() => navigate(-1)} type="button">
           Back
         </button>
-        <Link className="button button--ghost" to="/">
-          Dashboard
-        </Link>
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+          <Link className="button button--ghost" to="/">
+            Dashboard
+          </Link>
+        </div>
       </div>
 
       <section className="details-hero panel fade-up">
@@ -203,6 +235,9 @@ export default function EventDetails() {
               Approx. {event.distanceKm.toFixed(1)} km from your selected location.
             </p>
           ) : null}
+
+          {/* Live Counter */}
+          <LiveCounter event={event} />
         </div>
       </section>
 
@@ -309,6 +344,18 @@ export default function EventDetails() {
           {loadError ? <p className="message message--error">{loadError}</p> : null}
         </aside>
       </section>
+
+      {/* Reviews Section */}
+      <ReviewSection eventId={eventId} currentUserId={currentUserId} />
+
+      {/* E-Ticket Modal */}
+      {showTicket && ticketBooking && (
+        <ETicket
+          booking={ticketBooking}
+          qrDataUrl={ticketQr}
+          onClose={() => setShowTicket(false)}
+        />
+      )}
     </main>
   );
 }

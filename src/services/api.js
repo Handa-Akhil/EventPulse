@@ -68,6 +68,8 @@ function buildQueryString(params) {
   return queryString ? `?${queryString}` : "";
 }
 
+// ──────────── AUTH ────────────
+
 export async function registerUser(payload) {
   const response = await request("/auth/signup", {
     method: "POST",
@@ -105,6 +107,8 @@ export async function logoutUser() {
   }
 }
 
+// ──────────── USER ────────────
+
 export async function updateUserPreferences(preferences) {
   const response = await request("/users/me/preferences", {
     method: "PUT",
@@ -127,6 +131,8 @@ export async function saveUserLocation(location) {
 
   return response.location;
 }
+
+// ──────────── EVENTS ────────────
 
 export async function fetchNearbyEvents(params) {
   const response = await request(
@@ -166,6 +172,17 @@ export async function fetchEventDetails(eventId, location) {
   return response.event;
 }
 
+export async function createUserEvent(payload) {
+  const response = await request("/events", {
+    method: "POST",
+    body: payload,
+  });
+
+  return response;
+}
+
+// ──────────── BOOKINGS ────────────
+
 export async function fetchUserBookings(limit = 3) {
   const response = await request(
     `/bookings${buildQueryString({
@@ -182,14 +199,51 @@ export async function createBooking(payload) {
     body: payload,
   });
 
-  return response.booking;
+  return response;
 }
 
-export async function createUserEvent(payload) {
-  const response = await request("/events", {
+export async function fetchBookingTicket(bookingId) {
+  const response = await request(`/bookings/${bookingId}/ticket`);
+  return response;
+}
+
+// ──────────── REVIEWS ────────────
+
+export async function fetchReviews(eventId) {
+  const response = await request(`/reviews/${eventId}`);
+  return response;
+}
+
+export async function submitReview(payload) {
+  const response = await request("/reviews", {
     method: "POST",
     body: payload,
   });
+  return response.review;
+}
 
+
+
+
+// ──────────── NOTIFICATIONS ────────────
+
+export async function fetchNotifications() {
+  const response = await request("/notifications");
   return response;
+}
+
+export async function createNotification(payload) {
+  const response = await request("/notifications", {
+    method: "POST",
+    body: payload,
+  });
+  return response;
+}
+
+export async function markNotificationRead(id) {
+  await request(`/notifications/${id}/read`, { method: "PUT" });
+}
+
+export async function markAllNotificationsRead() {
+  await request("/notifications/read-all", { method: "PUT" });
 }

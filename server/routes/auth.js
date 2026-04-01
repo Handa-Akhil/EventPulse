@@ -66,6 +66,13 @@ router.post("/signup", async (req, res, next) => {
     const user = serializeUser(rows[0]);
     const token = createAuthToken(user.id);
 
+    // Create welcome notification
+    const notifId = randomUUID();
+    await pool.execute(
+      "INSERT INTO notifications (id, user_id, message, type) VALUES (?, ?, ?, ?)",
+      [notifId, userId, `Welcome to EventPulse, ${name}! Start exploring and booking amazing events near you.`, "info"]
+    );
+
     res.status(201).json({ token, user });
   } catch (error) {
     next(error);

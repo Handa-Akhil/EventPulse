@@ -7,8 +7,24 @@ import { initDatabase } from "./db/initDatabase.js";
 import { sequelize } from "./models/index.js";
 
 let io;
+const userSockets = new Map(); // userId -> Set<socketId>
 
-export { io };
+export { io, userSockets };
+
+export function emitToUser(userId, event, data) {
+  const sockets = userSockets.get(userId);
+  if (sockets && io) {
+    for (const socketId of sockets) {
+      io.to(socketId).emit(event, data);
+    }
+  }
+}
+
+export function emitToEventRoom(eventId, event, data) {
+  if (io) {
+    io.to(`event:${eventId}`).emit(event, data);
+  }
+}
 
 function getStartupHint(error) {
   if (error.code === "ER_ACCESS_DENIED_ERROR") {
@@ -37,6 +53,45 @@ async function startServer() {
 
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
+
+    // Register user for targeted notifications
+    socket.on("register", (userId) => {
+      if (!userId) return;
+      if (!userSockets.has(userId)) {
+        userSockets.set(userId, new Set());
+      }
+      userSockets.get(userId).add(socket.id);
+      socket.userId = userId;
+    });
+
+    // Join event room for live updates
+    socket.on("join-event", (eventId) => {
+      if (!eventId) return;
+      socket.join(`event:${eventId}`);
+      // Emit current viewer count
+      const room = io.sockets.adapter.rooms.get(`event:${eventId}`);
+      const viewerCount = room ? room.size : 0;
+      io.to(`event:${eventId}`).emit("viewer-count", { eventId, viewerCount });
+    });
+
+    // Leave event room
+    socket.on("leave-event", (eventId) => {
+      if (!eventId) return;
+      socket.leave(`event:${eventId}`);
+      const room = io.sockets.adapter.rooms.get(`event:${eventId}`);
+      const viewerCount = room ? room.size : 0;
+      io.to(`event:${eventId}`).emit("viewer-count", { eventId, viewerCount });
+    });
+
+    socket.on("disconnect", () => {
+      // Clean up user socket mapping
+      if (socket.userId && userSockets.has(socket.userId)) {
+        userSockets.get(socket.userId).delete(socket.id);
+        if (userSockets.get(socket.userId).size === 0) {
+          userSockets.delete(socket.userId);
+        }
+      }
+    });
   });
 
   server.listen(config.port, () => {

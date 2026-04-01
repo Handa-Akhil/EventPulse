@@ -5,6 +5,8 @@ import userRouter from "./routes/users.js";
 import eventRouter from "./routes/events.js";
 import bookingRouter from "./routes/bookings.js";
 import adminRoutes from "./routes/admin.js";
+import reviewRouter from "./routes/reviews.js";
+import notificationRouter from "./routes/notifications.js";
 
 export function createApp() {
   const app = express();
@@ -20,6 +22,8 @@ export function createApp() {
   app.use("/api/users", userRouter);
   app.use("/api/events", eventRouter);
   app.use("/api/bookings", bookingRouter);
+  app.use("/api/reviews", reviewRouter);
+  app.use("/api/notifications", notificationRouter);
 
  
   app.use("/api/admin", adminRoutes);

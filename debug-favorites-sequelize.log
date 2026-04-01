@@ -1,0 +1,96 @@
+[2026-04-01T03:09:56.017Z] Toggle Favorite Error: Unknown column 'id' in 'field list'
+  User: 3cf1d0c9-0153-4c2e-9ada-a5d0597de3d9, Event: fc-road-food-bazaar
+  Stack: Error
+    at Query.run (C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\dialects\mysql\query.js:52:25)
+    at C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///C:/Users/HP/OneDrive/Desktop/ep2/EventPulse/server/routes/favorites.js:73:22
+
+[2026-04-01T03:10:12.187Z] Toggle Favorite Error: Unknown column 'id' in 'field list'
+  User: 3cf1d0c9-0153-4c2e-9ada-a5d0597de3d9, Event: campus-curtain-call
+  Stack: Error
+    at Query.run (C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\dialects\mysql\query.js:52:25)
+    at C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///C:/Users/HP/OneDrive/Desktop/ep2/EventPulse/server/routes/favorites.js:73:22
+
+[2026-04-01T03:14:34.250Z] Toggle Favorite Error: Unknown column 'id' in 'field list'
+  User: ed4ecd7d-b9c4-4870-8bfe-06c52ba87420, Event: indie-reel-night
+  Stack: Error
+    at Query.run (C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\dialects\mysql\query.js:52:25)
+    at C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///C:/Users/HP/OneDrive/Desktop/ep2/EventPulse/server/routes/favorites.js:73:22
+
+[2026-04-01T03:15:09.426Z] Toggle Favorite Error: Unknown column 'id' in 'field list'
+  User: 2325bab2-228b-4c24-82af-b6d9984b616b, Event: city-league-clash-hyd
+  Stack: Error
+    at Query.run (C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\dialects\mysql\query.js:52:25)
+    at C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///C:/Users/HP/OneDrive/Desktop/ep2/EventPulse/server/routes/favorites.js:73:22
+
+[2026-04-01T03:16:36.029Z] Toggle Favorite Error: Unknown column 'id' in 'field list'
+  User: 2325bab2-228b-4c24-82af-b6d9984b616b, Event: startup-smash-cup
+  Stack: Error
+    at Query.run (C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\dialects\mysql\query.js:52:25)
+    at C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///C:/Users/HP/OneDrive/Desktop/ep2/EventPulse/server/routes/favorites.js:73:22
+
+[2026-04-01T03:19:50.066Z] Toggle Favorite Error: Unknown column 'id' in 'field list'
+  User: 9bbda3ad-944d-4f16-a67a-c2c6760b9275, Event: tech-beat-live
+  Stack: Error
+    at Query.run (C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\dialects\mysql\query.js:52:25)
+    at C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///C:/Users/HP/OneDrive/Desktop/ep2/EventPulse/server/routes/favorites.js:73:22
+
+[2026-04-01T03:46:15.921Z] Toggle Favorite Error: Unknown column 'id' in 'field list'
+  User: ed4ecd7d-b9c4-4870-8bfe-06c52ba87420, Event: midnight-mission
+  Stack: Error
+    at Query.run (C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\dialects\mysql\query.js:52:25)
+    at C:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///C:/Users/HP/OneDrive/Desktop/ep2/EventPulse/server/routes/favorites.js:73:22
+
+[2026-04-01T06:40:10.876Z] Toggle Favorite Error: Unknown column 'id' in 'field list'
+  User: ed4ecd7d-b9c4-4870-8bfe-06c52ba87420, Event: midnight-mission
+  Stack: Error
+    at Query.run (c:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\dialects\mysql\query.js:52:25)
+    at c:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///c:/Users/HP/OneDrive/Desktop/ep2/EventPulse/server/routes/favorites.js:73:22
+
+[2026-04-01T06:40:11.815Z] Toggle Favorite Error: Unknown column 'id' in 'field list'
+  User: ed4ecd7d-b9c4-4870-8bfe-06c52ba87420, Event: midnight-mission
+  Stack: Error
+    at Query.run (c:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\dialects\mysql\query.js:52:25)
+    at c:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///c:/Users/HP/OneDrive/Desktop/ep2/EventPulse/server/routes/favorites.js:73:22
+
+[2026-04-01T06:40:12.022Z] Toggle Favorite Error: Unknown column 'id' in 'field list'
+  User: ed4ecd7d-b9c4-4870-8bfe-06c52ba87420, Event: midnight-mission
+  Stack: Error
+    at Query.run (c:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\dialects\mysql\query.js:52:25)
+    at c:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///c:/Users/HP/OneDrive/Desktop/ep2/EventPulse/server/routes/favorites.js:73:22
+
+[2026-04-01T06:40:12.242Z] Toggle Favorite Error: Unknown column 'id' in 'field list'
+  User: ed4ecd7d-b9c4-4870-8bfe-06c52ba87420, Event: midnight-mission
+  Stack: Error
+    at Query.run (c:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\dialects\mysql\query.js:52:25)
+    at c:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///c:/Users/HP/OneDrive/Desktop/ep2/EventPulse/server/routes/favorites.js:73:22
+
+[2026-04-01T06:40:13.518Z] Toggle Favorite Error: Unknown column 'id' in 'field list'
+  User: ed4ecd7d-b9c4-4870-8bfe-06c52ba87420, Event: indie-reel-night
+  Stack: Error
+    at Query.run (c:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\dialects\mysql\query.js:52:25)
+    at c:\Users\HP\OneDrive\Desktop\ep2\EventPulse\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///c:/Users/HP/OneDrive/Desktop/ep2/EventPulse/server/routes/favorites.js:73:22
+
