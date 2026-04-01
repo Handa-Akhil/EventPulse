@@ -37,7 +37,6 @@ export default function CreateEvent() {
     setSuccess(false);
 
     try {
-   
       const dateObj = new Date(formData.eventDate);
       const formattedDate = dateObj.toLocaleDateString("en-US", {
         weekday: "short",
@@ -67,8 +66,8 @@ export default function CreateEvent() {
         <div className="brand-lockup">
           <span className="brand-mark">EP</span>
           <div>
-            <p className="eyebrow">User Submissions</p>
-            <h2>Create New Event</h2>
+            <p className="eyebrow">Create Event</p>
+            <h2>Submit Your Event</h2>
           </div>
         </div>
         <Link className="button button--ghost" to="/">
@@ -77,77 +76,139 @@ export default function CreateEvent() {
       </header>
 
       <section className="section fade-up">
-        <div className="panel" style={{ maxWidth: 600, margin: "auto" }}>
-          <h3>Submit an Event for Review</h3>
-          <p>Your event will be pending admin approval before it becomes visible to others.</p>
+        <div className="panel create-event-panel">
+          <div className="create-event-header">
+            <h3>Submit an Event for Review</h3>
+            <p className="create-event-subtitle">Your event will be pending admin approval before it becomes visible to others.</p>
+          </div>
 
           {error && <p className="message message--error">{error}</p>}
-          {success && <p className="message message--success">Event submitted successfully! Admins will review it soon.</p>}
+          {success && <p className="message message--success">✓ Event submitted successfully! Admins will review it soon.</p>}
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24 }}>
-            <label>
-              <strong>Title</strong>
-              <input name="title" value={formData.title} onChange={handleChange} required />
-            </label>
-
-            <div style={{ display: "flex", gap: 16 }}>
-              <label style={{ flex: 1 }}>
-                <strong>Category</strong>
-                <select name="category" value={formData.category} onChange={handleChange}>
-                  <option value="Music">Music</option>
-                  <option value="Tech">Tech</option>
-                  <option value="Art">Art</option>
-                  <option value="Sports">Sports</option>
-                  <option value="Business">Business</option>
-                </select>
+          <form onSubmit={handleSubmit} className="create-event-form">
+            {/* Basic Information Section */}
+            <div className="form-section">
+              <div className="form-section-label">Basic Information</div>
+              
+              <label className="form-control">
+                <span className="form-control-label">Event Title</span>
+                <input 
+                  name="title" 
+                  value={formData.title} 
+                  onChange={handleChange} 
+                  placeholder="e.g., Summer Music Festival" 
+                  required 
+                />
               </label>
-              <label style={{ flex: 1 }}>
-                <strong>City</strong>
-                <select name="city" value={formData.city} onChange={handleChange} required>
-                  {CITY_OPTIONS.map((city) => (
-                    <option key={city.city} value={city.city}>{city.label}</option>
-                  ))}
-                </select>
+
+              <div className="form-group-row">
+                <label className="form-control">
+                  <span className="form-control-label">Category</span>
+                  <select name="category" value={formData.category} onChange={handleChange}>
+                    <option value="Music">Music</option>
+                    <option value="Tech">Tech</option>
+                    <option value="Art">Art</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Business">Business</option>
+                  </select>
+                </label>
+                <label className="form-control">
+                  <span className="form-control-label">City</span>
+                  <select name="city" value={formData.city} onChange={handleChange} required>
+                    {CITY_OPTIONS.map((city) => (
+                      <option key={city.city} value={city.city}>{city.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            {/* Location & Timing Section */}
+            <div className="form-section">
+              <div className="form-section-label">Location & Timing</div>
+              
+              <label className="form-control">
+                <span className="form-control-label">Venue Name</span>
+                <input 
+                  name="venue" 
+                  value={formData.venue} 
+                  onChange={handleChange} 
+                  placeholder="e.g., Royal Palace Grounds" 
+                  required 
+                />
+              </label>
+
+              <label className="form-control">
+                <span className="form-control-label">Event Date</span>
+                <input 
+                  type="date" 
+                  name="eventDate" 
+                  value={formData.eventDate} 
+                  onChange={handleChange} 
+                  required 
+                />
               </label>
             </div>
 
-            <div style={{ display: "flex", gap: 16 }}>
-               <label style={{ flex: 1 }}>
-                  <strong>Venue</strong>
-                  <input name="venue" value={formData.venue} onChange={handleChange} required />
-               </label>
-               <label style={{ flex: 1 }}>
-                  <strong>Date</strong>
-                  <input type="date" name="eventDate" value={formData.eventDate} onChange={handleChange} required />
-               </label>
+            {/* Pricing & Capacity Section */}
+            <div className="form-section">
+              <div className="form-section-label">Pricing & Capacity</div>
+              
+              <div className="form-group-row">
+                <label className="form-control">
+                  <span className="form-control-label">Price (₹)</span>
+                  <input 
+                    type="number" 
+                    name="price" 
+                    value={formData.price} 
+                    onChange={handleChange} 
+                    min="0" 
+                    placeholder="100" 
+                    required 
+                  />
+                </label>
+                <label className="form-control">
+                  <span className="form-control-label">Total Seats</span>
+                  <input 
+                    type="number" 
+                    name="totalSeats" 
+                    value={formData.totalSeats} 
+                    onChange={handleChange} 
+                    min="1" 
+                    placeholder="100" 
+                    required 
+                  />
+                </label>
+              </div>
             </div>
 
-            <div style={{ display: "flex", gap: 16 }}>
-               <label style={{ flex: 1 }}>
-                  <strong>Price (₹)</strong>
-                  <input type="number" name="price" value={formData.price} onChange={handleChange} min="0" required />
-               </label>
-               <label style={{ flex: 1 }}>
-                  <strong>Total Seats</strong>
-                  <input type="number" name="totalSeats" value={formData.totalSeats} onChange={handleChange} min="1" required />
-               </label>
+            {/* Event Description Section */}
+            <div className="form-section">
+              <div className="form-section-label">Event Story</div>
+              
+              <label className="form-control description-control">
+                <span className="form-control-label">Tell Your Event's Story</span>
+                <textarea 
+                  name="shortDescription" 
+                  value={formData.shortDescription} 
+                  onChange={handleChange} 
+                  rows="8" 
+                  placeholder="Describe what makes your event special and authentic. Share the experience, atmosphere, and why people should attend..."
+                  required 
+                />
+              </label>
             </div>
 
-            <label>
-              <strong>Short Description</strong>
-              <textarea 
-                name="shortDescription" 
-                value={formData.shortDescription} 
-                onChange={handleChange} 
-                rows="3" 
-                required 
-                style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid #ccc", marginTop: 4 }}
-              />
-            </label>
-
-            <button type="submit" className="button button--primary" disabled={loading || success}>
-              {loading ? "Submitting..." : "Submit Event"}
-            </button>
+            {/* Submit Button */}
+            <div className="form-section-actions">
+              <button 
+                type="submit" 
+                className="button button--primary button--lg" 
+                disabled={loading || success}
+              >
+                {loading ? "Submitting..." : success ? "Event Submitted!" : "Submit Event for Approval"}
+              </button>
+            </div>
           </form>
         </div>
       </section>
