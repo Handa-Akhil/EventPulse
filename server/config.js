@@ -29,15 +29,17 @@ export const config = {
     host: process.env.DB_HOST || "127.0.0.1",
     port: toNumber(process.env.DB_PORT, 3306),
     user: process.env.DB_USER || "root",
-    password: "anmol@123",
+    password: process.env.DB_PASSWORD || "",
     name: process.env.DB_NAME || "travel_platform",
   },
   mail: {
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port: toNumber(process.env.SMTP_PORT, 465),
     secure: toBoolean(process.env.SMTP_SECURE, true),
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-    from: process.env.MAIL_FROM || `EventPulse <${process.env.SMTP_USER}>`,
+    user: process.env.SMTP_USER || process.env.EMAIL_USER,
+    pass: process.env.SMTP_PASS || process.env.EMAIL_PASS,
+    from:
+      process.env.MAIL_FROM ||
+      `EventPulse <${process.env.SMTP_USER || process.env.EMAIL_USER || ""}>`,
   },
 };

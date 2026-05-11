@@ -99,9 +99,18 @@ async function startServer() {
   });
 }
 
-startServer().catch((error) => {
-  console.error("Failed to start EventPulse API.");
-  console.error(getStartupHint(error));
-  console.error(error);
-  process.exit(1);
-});
+// startServer().catch((error) => {
+//   console.error("Failed to start EventPulse API.");
+//   console.error(getStartupHint(error));
+//   console.error(error);
+//   process.exit(1);
+// });
+
+if (process.env.NODE_ENV !== "test") {
+  startServer().catch((error) => {
+    console.error("Failed to start EventPulse API.");
+    console.error(getStartupHint(error));
+    console.error(error);
+    process.exit(1);
+  });
+}
