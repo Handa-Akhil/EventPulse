@@ -26,7 +26,7 @@ async function request(path, options = {}) {
 
   const contentType = response.headers.get("content-type") || "";
   let payload;
-  
+
   try {
     payload = contentType.includes("application/json")
       ? await response.json()
@@ -68,8 +68,6 @@ function buildQueryString(params) {
   return queryString ? `?${queryString}` : "";
 }
 
-// ──────────── AUTH ────────────
-
 export async function registerUser(payload) {
   const response = await request("/auth/signup", {
     method: "POST",
@@ -107,7 +105,32 @@ export async function logoutUser() {
   }
 }
 
-// ──────────── USER ────────────
+export async function requestPasswordResetOtp(email) {
+  const response = await request("/auth/forgot-password/request", {
+    method: "POST",
+    body: { email },
+  });
+
+  return response;
+}
+
+export async function verifyPasswordResetOtp(email, otp) {
+  const response = await request("/auth/forgot-password/verify", {
+    method: "POST",
+    body: { email, otp },
+  });
+
+  return response;
+}
+
+export async function resetPasswordWithOtp(payload) {
+  const response = await request("/auth/forgot-password/reset", {
+    method: "POST",
+    body: payload,
+  });
+
+  return response;
+}
 
 export async function updateUserPreferences(preferences) {
   const response = await request("/users/me/preferences", {
@@ -131,8 +154,6 @@ export async function saveUserLocation(location) {
 
   return response.location;
 }
-
-// ──────────── EVENTS ────────────
 
 export async function fetchNearbyEvents(params) {
   const response = await request(
@@ -181,8 +202,6 @@ export async function createUserEvent(payload) {
   return response;
 }
 
-// ──────────── BOOKINGS ────────────
-
 export async function fetchUserBookings(limit = 3) {
   const response = await request(
     `/bookings${buildQueryString({
@@ -207,8 +226,6 @@ export async function fetchBookingTicket(bookingId) {
   return response;
 }
 
-// ──────────── REVIEWS ────────────
-
 export async function fetchReviews(eventId) {
   const response = await request(`/reviews/${eventId}`);
   return response;
@@ -219,13 +236,9 @@ export async function submitReview(payload) {
     method: "POST",
     body: payload,
   });
+
   return response.review;
 }
-
-
-
-
-// ──────────── NOTIFICATIONS ────────────
 
 export async function fetchNotifications() {
   const response = await request("/notifications");
@@ -237,6 +250,7 @@ export async function createNotification(payload) {
     method: "POST",
     body: payload,
   });
+
   return response;
 }
 

@@ -24,3 +24,11 @@ Error Stack: EAUTH
 [2026-04-01T13:38:33.943Z] ❌ Email sending failed to anmol@gmail: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
 535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-35dbe608062sm4874038a91.2 - gsmtp
 Error Stack: EAUTH
+[2026-04-01T15:56:24.610Z] ✉️ Email sent successfully to anshvohra22@gmail.com: 250 2.0.0 OK  1775058983 d2e1a72fcca58-82cf9c6c2b4sm306604b3a.46 - gsmtp
+[2026-04-01T16:23:53.273Z] ✉️ Email sent successfully to anshvohra37@gmail.com: 250 2.0.0 OK  1775060631 98e67ed59e1d1-35dd368f538sm324674a91.14 - gsmtp
+[2026-04-02T06:27:38.546Z] ✉️ Email sent successfully to anshvohra22@gmail.com: 250 2.0.0 OK  1775111256 d2e1a72fcca58-82cf9b5f1dbsm1895724b3a.27 - gsmtp
+[2026-04-02T06:59:34.159Z] ✉️ Email sent successfully to anshvohra22@gmail.com: 250 2.0.0 OK  1775113171 d9443c01a7336-2b274757fa7sm17581035ad.21 - gsmtp
+[2026-04-16T04:41:10.186Z] ✉️ Email sent successfully to anshvohra22@gmail.com: 250 2.0.0 OK  1776314470 d9443c01a7336-2b478142565sm37981035ad.37 - gsmtp
+[2026-05-11T06:58:13.133Z] ✉️ Email sent successfully to anshvohra22@gmail.com: 250 2.0.0 OK  1778482692 d2e1a72fcca58-8396563f049sm22225031b3a.7 - gsmtp
+[2026-05-11T07:02:24.651Z] ✉️ Email sent successfully to anshvohra22@gmail.com: 250 2.0.0 OK  1778482944 d9443c01a7336-2baf1d52ef9sm92627485ad.35 - gsmtp
+[2026-05-11T07:14:37.374Z] ✉️ Email sent successfully to anshvohra22@gmail.com: 250 2.0.0 OK  1778483677 41be03b00d2f7-c826771c6ddsm7991419a12.23 - gsmtp

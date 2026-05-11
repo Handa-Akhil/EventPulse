@@ -164,6 +164,8 @@ const TABLE_STATEMENTS = [
     preferences_json LONGTEXT NOT NULL,
     saved_location_json LONGTEXT NULL,
     has_onboarded TINYINT(1) NOT NULL DEFAULT 0,
+    password_reset_otp_hash VARCHAR(255) NULL,
+    password_reset_otp_expires_at DATETIME NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   )`,
@@ -255,6 +257,8 @@ export async function initDatabase() {
     await pool.query(statement);
   }
 
+  await ensureColumnExists(pool, "users", "password_reset_otp_hash", "VARCHAR(255) NULL");
+  await ensureColumnExists(pool, "users", "password_reset_otp_expires_at", "DATETIME NULL");
   await ensureColumnExists(pool, "events", "image_url", "TEXT NULL AFTER hero_gradient");
   await ensureColumnExists(pool, "events", "total_seats", "INT NULL");
   await ensureColumnExists(pool, "events", "remaining_seats", "INT NULL");
