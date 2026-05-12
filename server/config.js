@@ -25,6 +25,12 @@ export const config = {
   port: toNumber(process.env.PORT, 4000),
   clientOrigin: process.env.CLIENT_ORIGIN || "http://127.0.0.1:5173",
   authSecret: process.env.AUTH_SECRET || "eventpulse-dev-secret",
+  google: {
+    clientId:
+      process.env.GOOGLE_CLIENT_ID ||
+      process.env.VITE_GOOGLE_CLIENT_ID ||
+      "",
+  },
   db: {
     host: process.env.DB_HOST || "127.0.0.1",
     port: toNumber(process.env.DB_PORT, 3306),

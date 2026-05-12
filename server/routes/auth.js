@@ -1,6 +1,8 @@
 import { randomInt, randomUUID } from "node:crypto";
 import express from "express";
 import bcrypt from "bcryptjs";
+import { OAuth2Client } from "google-auth-library";
+import { config } from "../config.js";
 import { getPool } from "../db/pool.js";
 import { createAuthToken, requireAuth } from "../middleware/auth.js";
 import { sendEmail } from "../services/emailService.js";
@@ -9,6 +11,7 @@ import { serializeUser } from "../utils/serializers.js";
 const router = express.Router();
 const PASSWORD_RESET_OTP_LENGTH = 6;
 const PASSWORD_RESET_OTP_EXPIRY_MINUTES = 10;
+const googleClient = new OAuth2Client();
 
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
@@ -168,6 +171,61 @@ router.post("/login", async (req, res, next) => {
 
     if (!passwordMatches) {
       res.status(401).json({ message: "Invalid email or password." });
+      return;
+    }
+
+    const user = serializeUser(userRow);
+    const token = createAuthToken(user.id);
+
+    res.json({ token, user });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/google", async (req, res, next) => {
+  try {
+    const credential = String(req.body?.credential || "").trim();
+
+    if (!config.google.clientId) {
+      res.status(500).json({ message: "Google login is not configured." });
+      return;
+    }
+
+    if (!credential) {
+      res.status(400).json({ message: "Google credential is required." });
+      return;
+    }
+
+    let payload;
+
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: config.google.clientId,
+      });
+
+      payload = ticket.getPayload();
+    } catch {
+      res.status(401).json({ message: "Unable to verify Google account." });
+      return;
+    }
+
+    const email = normalizeEmail(payload?.email);
+
+    if (!payload?.email_verified || !email) {
+      res.status(401).json({ message: "Please use a verified Google account." });
+      return;
+    }
+
+    const pool = await getPool();
+    const userRow = await getUserByEmail(pool, email);
+
+    if (!userRow) {
+      res.status(404).json({
+        message:
+          "No EventPulse account matches this Google email. Sign up first or use the same email as your existing account.",
+      });
       return;
     }
 

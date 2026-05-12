@@ -1,4 +1,4 @@
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 
@@ -14,7 +14,97 @@ const SIGNUP_DEFAULTS = {
   confirmPassword: "",
 };
 
-export default function AuthPage({ onLogin, onSignup }) {
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const GOOGLE_IMAGE_SRC = "/images/events/google.jpg";
+const GOOGLE_SCRIPT_ID = "eventpulse-google-identity";
+const GOOGLE_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
+const AUTH_INLINE_ACTION_STYLE = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  flexWrap: "nowrap",
+  gap: "0.85rem",
+  width: "100%",
+  marginTop: "-0.35rem",
+};
+const AUTH_TEXT_BUTTON_STYLE = {
+  whiteSpace: "nowrap",
+  flex: "0 0 auto",
+};
+const GOOGLE_ICON_SHELL_STYLE = {
+  position: "relative",
+  width: "50px",
+  height: "50px",
+  minWidth: "50px",
+  minHeight: "50px",
+  maxWidth: "50px",
+  maxHeight: "50px",
+  overflow: "hidden",
+  borderRadius: "50%",
+  backgroundColor: "#ffffff",
+  marginLeft: "auto",
+  flex: "0 0 50px",
+};
+const GOOGLE_ICON_IMAGE_WRAP_STYLE = {
+  position: "absolute",
+  inset: 0,
+  display: "grid",
+  placeItems: "center",
+  pointerEvents: "none",
+  zIndex: 2,
+};
+const GOOGLE_ICON_IMAGE_STYLE = {
+  width: "34px",
+  height: "34px",
+  display: "block",
+  objectFit: "contain",
+};
+const GOOGLE_NATIVE_BUTTON_STYLE = {
+  position: "absolute",
+  inset: 0,
+  opacity: 0,
+  zIndex: 1,
+};
+
+function loadGoogleIdentityScript() {
+  if (typeof window === "undefined") {
+    return Promise.reject(
+      new Error("Google Sign-In is unavailable outside the browser."),
+    );
+  }
+
+  if (window.google?.accounts?.id) {
+    return Promise.resolve(window.google);
+  }
+
+  const existingScript = document.getElementById(GOOGLE_SCRIPT_ID);
+
+  if (existingScript) {
+    return new Promise((resolve, reject) => {
+      existingScript.addEventListener("load", () => resolve(window.google), {
+        once: true,
+      });
+      existingScript.addEventListener(
+        "error",
+        () => reject(new Error("Failed to load Google Sign-In.")),
+        { once: true },
+      );
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.id = GOOGLE_SCRIPT_ID;
+    script.src = GOOGLE_SCRIPT_SRC;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve(window.google);
+    script.onerror = () => reject(new Error("Failed to load Google Sign-In."));
+    document.head.append(script);
+  });
+}
+
+export default function AuthPage({ onGoogleLogin, onLogin, onSignup }) {
   const navigate = useNavigate();
   const [mode, setMode] = useState("login");
   const [loginForm, setLoginForm] = useState(LOGIN_DEFAULTS);
@@ -23,6 +113,41 @@ export default function AuthPage({ onLogin, onSignup }) {
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [isGoogleReady, setIsGoogleReady] = useState(false);
+  const googleButtonRef = useRef(null);
+  const googleCallbackRef = useRef(async () => {});
+  const isGoogleLoginEnabled = Boolean(GOOGLE_CLIENT_ID && onGoogleLogin);
+
+  useEffect(() => {
+    if (!isGoogleLoginEnabled) {
+      return undefined;
+    }
+
+    let ignore = false;
+
+    void loadGoogleIdentityScript()
+      .then((google) => {
+        if (ignore || !google?.accounts?.id) {
+          return;
+        }
+
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (response) => {
+            void googleCallbackRef.current(response);
+          },
+        });
+
+        setIsGoogleReady(true);
+      })
+      .catch((loadError) => {
+        console.error("Failed to initialize Google Sign-In:", loadError);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [isGoogleLoginEnabled]);
 
   const handleLoginChange = (event) => {
     const { name, value } = event.target;
@@ -83,6 +208,54 @@ export default function AuthPage({ onLogin, onSignup }) {
     }));
     setError("");
     setNotice("Password updated successfully. Log in with your new password.");
+  };
+
+  googleCallbackRef.current = async (googleResponse) => {
+    const credential = String(googleResponse?.credential || "").trim();
+
+    if (!credential) {
+      setError("Google login could not be verified. Please try again.");
+      return;
+    }
+
+    setError("");
+    setNotice("");
+    setIsSubmitting(true);
+
+    try {
+      await onGoogleLogin({ credential });
+      startTransition(() => navigate("/"));
+    } catch (submissionError) {
+      setError(submissionError.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (
+      mode !== "login" ||
+      !isGoogleReady ||
+      !googleButtonRef.current ||
+      !window.google?.accounts?.id
+    ) {
+      return;
+    }
+
+    const buttonHost = googleButtonRef.current;
+
+    buttonHost.innerHTML = "";
+    window.google.accounts.id.renderButton(buttonHost, {
+      type: "icon",
+      theme: "outline",
+      size: "large",
+      shape: "circle",
+    });
+  }, [isGoogleReady, mode]);
+
+  const handleUnavailableGoogleLogin = () => {
+    setError("Add VITE_GOOGLE_CLIENT_ID in .env to enable Google login.");
+    setNotice("");
   };
 
   return (
@@ -176,7 +349,7 @@ export default function AuthPage({ onLogin, onSignup }) {
                   />
                 </label>
 
-                <div className="auth-inline-action">
+                <div className="auth-inline-action" style={AUTH_INLINE_ACTION_STYLE}>
                   <button
                     className="auth-text-button"
                     disabled={isSubmitting}
@@ -185,10 +358,63 @@ export default function AuthPage({ onLogin, onSignup }) {
                       setNotice("");
                       setIsForgotPasswordOpen(true);
                     }}
+                    style={AUTH_TEXT_BUTTON_STYLE}
                     type="button"
                   >
                     Forgot password?
                   </button>
+
+                  {isGoogleLoginEnabled ? (
+                    <div
+                      aria-busy={isSubmitting}
+                      className={
+                        isSubmitting
+                          ? "auth-google-inline auth-google-inline--disabled"
+                          : "auth-google-inline"
+                      }
+                      style={GOOGLE_ICON_SHELL_STYLE}
+                      title="Continue with Google"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="auth-google-visual"
+                        style={GOOGLE_ICON_IMAGE_WRAP_STYLE}
+                      >
+                        <img
+                          alt=""
+                          className="auth-google-image"
+                          src={GOOGLE_IMAGE_SRC}
+                          style={GOOGLE_ICON_IMAGE_STYLE}
+                        />
+                      </span>
+
+                      <div
+                        aria-label="Continue with Google"
+                        className="auth-google-button auth-google-button--icon"
+                        ref={googleButtonRef}
+                        style={GOOGLE_NATIVE_BUTTON_STYLE}
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      aria-label="Continue with Google"
+                      className="auth-google-fallback"
+                      disabled={isSubmitting}
+                      onClick={handleUnavailableGoogleLogin}
+                      style={GOOGLE_ICON_SHELL_STYLE}
+                      title="Continue with Google"
+                      type="button"
+                    >
+                      <span aria-hidden="true" style={GOOGLE_ICON_IMAGE_WRAP_STYLE}>
+                        <img
+                          alt=""
+                          className="auth-google-image"
+                          src={GOOGLE_IMAGE_SRC}
+                          style={GOOGLE_ICON_IMAGE_STYLE}
+                        />
+                      </span>
+                    </button>
+                  )}
                 </div>
 
                 <button className="button button--primary" disabled={isSubmitting} type="submit">
@@ -260,7 +486,7 @@ export default function AuthPage({ onLogin, onSignup }) {
 
             <p className="supporting-text">
               First-time signup opens a preference popup so the dashboard can be
-              tailored immediately. Returning users can log in directly.
+              tailored immediately. Returning users can log in directly or continue with Google when the email matches.
             </p>
 
             <div className="auth-admin-panel">

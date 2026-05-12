@@ -2,12 +2,23 @@ import request from "supertest";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import bcrypt from "bcryptjs";
 
-let mockExecute;
+const mocks = vi.hoisted(() => ({
+  execute: vi.fn(),
+  verifyIdToken: vi.fn(),
+}));
 
 vi.mock("../db/pool.js", () => ({
   getPool: vi.fn(async () => ({
-    execute: mockExecute,
+    execute: mocks.execute,
   })),
+}));
+
+vi.mock("google-auth-library", () => ({
+  OAuth2Client: function MockOAuth2Client() {
+    return {
+      verifyIdToken: mocks.verifyIdToken,
+    };
+  },
 }));
 
 vi.mock("../config.js", () => ({
@@ -15,13 +26,17 @@ vi.mock("../config.js", () => ({
     authSecret: "test-secret",
     db: {},
     mail: {},
+    google: {
+      clientId: "test-google-client-id.apps.googleusercontent.com",
+    },
   },
 }));
 
 describe("Auth API", () => {
   beforeEach(() => {
     vi.resetModules();
-    mockExecute = vi.fn();
+    mocks.execute.mockReset();
+    mocks.verifyIdToken.mockReset();
   });
 
   it("should reject signup with invalid email", async () => {
@@ -53,7 +68,7 @@ describe("Auth API", () => {
   });
 
   it("should reject duplicate signup email", async () => {
-    mockExecute.mockResolvedValueOnce([[{ id: "existing-user" }]]);
+    mocks.execute.mockResolvedValueOnce([[{ id: "existing-user" }]]);
 
     const { createApp } = await import("../app.js");
     const app = createApp();
@@ -71,7 +86,7 @@ describe("Auth API", () => {
   it("should reject login with wrong password", async () => {
     const hash = await bcrypt.hash("correctpassword", 10);
 
-    mockExecute.mockResolvedValueOnce([
+    mocks.execute.mockResolvedValueOnce([
       [
         {
           id: "user-1",
@@ -100,7 +115,7 @@ describe("Auth API", () => {
   it("should login successfully and return token", async () => {
     const hash = await bcrypt.hash("123456", 10);
 
-    mockExecute.mockResolvedValueOnce([
+    mocks.execute.mockResolvedValueOnce([
       [
         {
           id: "user-1",
@@ -125,5 +140,60 @@ describe("Auth API", () => {
     expect(res.status).toBe(200);
     expect(res.body.token).toBeDefined();
     expect(res.body.user.email).toBe("rajat@test.com");
+  });
+
+  it("should login with Google when the email matches an existing account", async () => {
+    mocks.verifyIdToken.mockResolvedValueOnce({
+      getPayload: () => ({
+        email: "rajat@test.com",
+        email_verified: true,
+      }),
+    });
+
+    mocks.execute.mockResolvedValueOnce([
+      [
+        {
+          id: "user-1",
+          name: "Rajat",
+          email: "rajat@test.com",
+          password_hash: "unused-for-google-login",
+          preferences_json: "[]",
+          saved_location_json: null,
+          has_onboarded: 0,
+        },
+      ],
+    ]);
+
+    const { createApp } = await import("../app.js");
+    const app = createApp();
+
+    const res = await request(app).post("/api/auth/google").send({
+      credential: "google-id-token",
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.token).toBeDefined();
+    expect(res.body.user.email).toBe("rajat@test.com");
+  });
+
+  it("should reject Google login when no account matches the Google email", async () => {
+    mocks.verifyIdToken.mockResolvedValueOnce({
+      getPayload: () => ({
+        email: "missing@test.com",
+        email_verified: true,
+      }),
+    });
+
+    mocks.execute.mockResolvedValueOnce([[]]);
+
+    const { createApp } = await import("../app.js");
+    const app = createApp();
+
+    const res = await request(app).post("/api/auth/google").send({
+      credential: "google-id-token",
+    });
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toContain("No EventPulse account matches this Google email");
   });
 });

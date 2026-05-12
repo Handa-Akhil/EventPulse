@@ -11,6 +11,7 @@ import MyTickets from "./components/MyTickets";
 
 import {
   getSessionUser,
+  loginWithGoogle,
   loginUser,
   logoutUser,
   registerUser,
@@ -84,6 +85,12 @@ export default function App() {
     return user;
   };
 
+  const handleGoogleLogin = async (payload) => {
+    const user = await loginWithGoogle(payload);
+    setCurrentUser(user);
+    return user;
+  };
+
   const handleSignup = async (payload) => {
     const user = await registerUser(payload);
     setCurrentUser(user);
@@ -124,7 +131,11 @@ export default function App() {
             currentUser ? (
               <Navigate to="/" replace />
             ) : (
-              <AuthPage onLogin={handleLogin} onSignup={handleSignup} />
+              <AuthPage
+                onGoogleLogin={handleGoogleLogin}
+                onLogin={handleLogin}
+                onSignup={handleSignup}
+              />
             )
           }
         />

@@ -88,6 +88,16 @@ export async function loginUser(payload) {
   return response.user;
 }
 
+export async function loginWithGoogle(payload) {
+  const response = await request("/auth/google", {
+    method: "POST",
+    body: payload,
+  });
+
+  saveSessionToken(response.token);
+  return response.user;
+}
+
 export async function getSessionUser() {
   if (!getSessionToken()) {
     return null;
