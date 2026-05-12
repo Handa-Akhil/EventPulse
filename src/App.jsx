@@ -31,6 +31,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isPreferenceOpen, setIsPreferenceOpen] = useState(false);
+  const [chatbotWelcomeIntent, setChatbotWelcomeIntent] = useState(null);
 
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(
     () => localStorage.getItem("adminLoggedIn") === "true"
@@ -82,24 +83,40 @@ export default function App() {
   const handleLogin = async (credentials) => {
     const user = await loginUser(credentials);
     setCurrentUser(user);
+    setChatbotWelcomeIntent({
+      type: "login",
+      stamp: Date.now(),
+      userId: user.id,
+    });
     return user;
   };
 
   const handleGoogleLogin = async (payload) => {
     const user = await loginWithGoogle(payload);
     setCurrentUser(user);
+    setChatbotWelcomeIntent({
+      type: "google",
+      stamp: Date.now(),
+      userId: user.id,
+    });
     return user;
   };
 
   const handleSignup = async (payload) => {
     const user = await registerUser(payload);
     setCurrentUser(user);
+    setChatbotWelcomeIntent({
+      type: "signup",
+      stamp: Date.now(),
+      userId: user.id,
+    });
     return user;
   };
 
   const handleLogout = async () => {
     await logoutUser();
     setCurrentUser(null);
+    setChatbotWelcomeIntent(null);
   };
 
   const handleSavePreferences = async (preferences) => {
@@ -145,7 +162,13 @@ export default function App() {
           path="/"
           element={
             <ProtectedRoute currentUser={currentUser}>
-              <Dashboard currentUser={currentUser} onLogout={handleLogout} />
+              <Dashboard
+                chatbotWelcomeIntent={chatbotWelcomeIntent}
+                currentUser={currentUser}
+                isPreferenceOpen={isPreferenceOpen}
+                onChatbotWelcomeShown={() => setChatbotWelcomeIntent(null)}
+                onLogout={handleLogout}
+              />
             </ProtectedRoute>
           }
         />

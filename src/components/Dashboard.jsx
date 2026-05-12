@@ -11,6 +11,7 @@ import ThemeToggle from "./ThemeToggle";
 import NotificationBell from "./NotificationBell";
 import EventCalendar from "./EventCalendar";
 import EventMap from "./EventMap";
+import Chatbot from "./Chatbot";
 import { CITY_OPTIONS, DEFAULT_CITY } from "../data/events";
 import { fetchCurrentLocation } from "../utils/geo";
 import {
@@ -23,7 +24,13 @@ import {
 } from "../services/api";
 import socket, { connectSocket } from "../socket";
 
-export default function Dashboard({ currentUser, onLogout }) {
+export default function Dashboard({
+  chatbotWelcomeIntent,
+  currentUser,
+  isPreferenceOpen,
+  onChatbotWelcomeShown,
+  onLogout,
+}) {
   const [location, setLocation] = useState(currentUser.savedLocation ?? null);
   const [events, setEvents] = useState([]);
   const [recommendedEvents, setRecommendedEvents] = useState([]);
@@ -514,6 +521,17 @@ export default function Dashboard({ currentUser, onLogout }) {
           </div>
         )}
       </section>
+      <Chatbot
+        activeCategory={activeCategory}
+        currentUser={currentUser}
+        isPreferenceOpen={isPreferenceOpen}
+        location={location}
+        nearbyEvents={events}
+        onWelcomeShown={onChatbotWelcomeShown}
+        recentBookings={recentBookings}
+        recommendedEvents={recommendedEvents}
+        welcomeIntent={chatbotWelcomeIntent}
+      />
     </main>
   );
 }
