@@ -178,6 +178,120 @@ router.post("/", async (req, res, next) => {
 });
 
 
+router.get("/analytics", async (req, res, next) => {
+  try {
+    const pool = await getPool();
+
+    // --- KPI Stats ---
+    const [[eventsStats]] = await pool.execute(`
+      SELECT
+        COUNT(*) AS totalEvents,
+        SUM(status = 'pending')  AS pendingEvents,
+        SUM(status = 'approved') AS approvedEvents,
+        SUM(status = 'rejected') AS rejectedEvents
+      FROM events
+    `);
+
+    const [[bookingStats]] = await pool.execute(`
+      SELECT COUNT(*) AS totalBookings, COALESCE(SUM(total), 0) AS totalRevenue
+      FROM bookings
+    `);
+
+    const [[userStats]] = await pool.execute(`
+      SELECT COUNT(*) AS totalUsers FROM users
+    `);
+
+    const [[reviewStats]] = await pool.execute(`
+      SELECT COALESCE(ROUND(AVG(rating), 1), 0) AS avgRating FROM reviews
+    `);
+
+    // --- Monthly Revenue (last 12 months) ---
+    const [revenueByMonth] = await pool.execute(`
+      SELECT
+        DATE_FORMAT(created_at, '%b') AS month,
+        MONTH(created_at) AS monthNum,
+        YEAR(created_at) AS year,
+        COALESCE(SUM(total), 0) AS revenue
+      FROM bookings
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+      GROUP BY year, monthNum, month
+      ORDER BY year ASC, monthNum ASC
+    `);
+
+    // --- Events by Category ---
+    const [eventsByCategory] = await pool.execute(`
+      SELECT category, COUNT(*) AS count
+      FROM events
+      WHERE status = 'approved'
+      GROUP BY category
+      ORDER BY count DESC
+      LIMIT 8
+    `);
+
+    // --- Top 5 Events by Bookings ---
+    const [topEvents] = await pool.execute(`
+      SELECT
+        e.id, e.title, e.category, e.date_label, e.status,
+        COUNT(b.id) AS bookings,
+        COALESCE(SUM(b.total), 0) AS revenue
+      FROM events e
+      LEFT JOIN bookings b ON b.event_id = e.id
+      GROUP BY e.id, e.title, e.category, e.date_label, e.status
+      ORDER BY bookings DESC
+      LIMIT 5
+    `);
+
+    // --- Bookings by Day of Week (last 30 days) ---
+    const [bookingsByDay] = await pool.execute(`
+      SELECT
+        DAYNAME(created_at) AS day,
+        DAYOFWEEK(created_at) AS dayNum,
+        COUNT(*) AS bookings
+      FROM bookings
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      GROUP BY dayNum, day
+      ORDER BY dayNum ASC
+    `);
+
+    res.json({
+      stats: {
+        totalEvents:    Number(eventsStats.totalEvents)   || 0,
+        pendingEvents:  Number(eventsStats.pendingEvents)  || 0,
+        approvedEvents: Number(eventsStats.approvedEvents) || 0,
+        rejectedEvents: Number(eventsStats.rejectedEvents) || 0,
+        totalBookings:  Number(bookingStats.totalBookings) || 0,
+        totalRevenue:   Number(bookingStats.totalRevenue)  || 0,
+        totalUsers:     Number(userStats.totalUsers)       || 0,
+        avgRating:      Number(reviewStats.avgRating)      || 0,
+      },
+      revenueByMonth: revenueByMonth.map(r => ({
+        month:   r.month,
+        revenue: Number(r.revenue) || 0,
+      })),
+      eventsByCategory: eventsByCategory.map(c => ({
+        category: c.category,
+        count:    Number(c.count) || 0,
+      })),
+      topEvents: topEvents.map(e => ({
+        id:        e.id,
+        title:     e.title,
+        category:  e.category,
+        dateLabel: e.date_label,
+        status:    e.status,
+        bookings:  Number(e.bookings)  || 0,
+        revenue:   Number(e.revenue)   || 0,
+      })),
+      bookingsByDay: bookingsByDay.map(d => ({
+        day:      d.day,
+        bookings: Number(d.bookings) || 0,
+      })),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
 router.delete("/:id", async (req, res, next) => {
   try {
     const pool = await getPool();

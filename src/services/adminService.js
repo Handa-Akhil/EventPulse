@@ -51,6 +51,12 @@ export const addEventManual = async (payload) => {
 };
 
 
+export const getAnalytics = async () => {
+  const res = await fetch(`${BASE_URL}/analytics`);
+  return res.json();
+};
+
+
 export const deleteEvent = async (id) => {
   const res = await fetch(`${BASE_URL}/${id}`, {
     method: "DELETE",
