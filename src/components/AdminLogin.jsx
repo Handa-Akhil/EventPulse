@@ -23,7 +23,7 @@ export default function AdminLogin({ onLogin }) {
         setError(res.message || "Invalid credentials");
       }
     } catch (err) {
-      setError("Failed to login. Ensure server is running.");
+      setError(err.message || "Failed to login. Ensure server is running.");
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ export default function AdminLogin({ onLogin }) {
                 outline: "none",
                 transition: "all 0.2s"
               }}
-              placeholder="akhilhanda855@gmail.com"
+              placeholder="admin@example.com"
             />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: "8px" }}>

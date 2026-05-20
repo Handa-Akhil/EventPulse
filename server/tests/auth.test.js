@@ -23,9 +23,27 @@ vi.mock("google-auth-library", () => ({
 
 vi.mock("../config.js", () => ({
   config: {
-    authSecret: "test-secret",
+    isProduction: false,
+    server: {
+      allowedOrigins: [],
+      trustProxy: false,
+      serveStaticClient: false,
+    },
+    auth: {
+      secret: "test-secret",
+      issuer: "eventpulse-api",
+      audience: "eventpulse-client",
+    },
+    adminAuth: {
+      email: "admin@example.com",
+      password: "password",
+      passwordHash: "",
+      secret: "test-admin-secret",
+      name: "Test Admin",
+    },
     db: {},
     mail: {},
+    logging: {},
     google: {
       clientId: "test-google-client-id.apps.googleusercontent.com",
     },

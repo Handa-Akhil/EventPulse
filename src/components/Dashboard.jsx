@@ -20,9 +20,7 @@ import {
   fetchSavedLocation,
   fetchUserBookings,
   saveUserLocation,
-  createNotification,
 } from "../services/api";
-import socket, { connectSocket } from "../socket";
 
 export default function Dashboard({
   chatbotWelcomeIntent,
@@ -312,7 +310,7 @@ export default function Dashboard({
           <p className="lead">
             Showing events within 40 km of{" "}
             <strong>{location?.label || "your selected city"}</strong>, filtered
-            by your saved preferences from MySQL.
+            by your saved preferences from TiDB Cloud.
           </p>
 
           <div className="location-controls">
@@ -357,7 +355,7 @@ export default function Dashboard({
           </article>
           <article className="metric-card">
             <strong>{recentBookings.length}</strong>
-            <span>recent MySQL-backed bookings</span>
+            <span>recent TiDB-backed bookings</span>
           </article>
         </div>
       </section>
@@ -484,7 +482,7 @@ export default function Dashboard({
       <section className="section fade-up">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">Synced from MySQL</span>
+            <span className="eyebrow">Synced from TiDB Cloud</span>
             <h2>Recent bookings</h2>
           </div>
           <Link className="button button--ghost" to="/">

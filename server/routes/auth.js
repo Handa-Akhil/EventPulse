@@ -1,6 +1,7 @@
 import { randomInt, randomUUID } from "node:crypto";
 import express from "express";
 import bcrypt from "bcryptjs";
+import rateLimit from "express-rate-limit";
 import { OAuth2Client } from "google-auth-library";
 import { config } from "../config.js";
 import { getPool } from "../db/pool.js";
@@ -12,6 +13,15 @@ const router = express.Router();
 const PASSWORD_RESET_OTP_LENGTH = 6;
 const PASSWORD_RESET_OTP_EXPIRY_MINUTES = 10;
 const googleClient = new OAuth2Client();
+const authWriteLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: config.isProduction ? 20 : 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many authentication attempts. Please try again later.",
+  },
+});
 
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
@@ -73,7 +83,7 @@ async function getUserByEmail(pool, email) {
   return rows[0] || null;
 }
 
-router.post("/signup", async (req, res, next) => {
+router.post("/signup", authWriteLimiter, async (req, res, next) => {
   try {
     const name = String(req.body?.name || "").trim();
     const email = normalizeEmail(req.body?.email);
@@ -145,7 +155,7 @@ router.post("/signup", async (req, res, next) => {
   }
 });
 
-router.post("/login", async (req, res, next) => {
+router.post("/login", authWriteLimiter, async (req, res, next) => {
   try {
     const email = normalizeEmail(req.body?.email);
     const password = normalizePassword(req.body?.password);
@@ -183,7 +193,7 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
-router.post("/google", async (req, res, next) => {
+router.post("/google", authWriteLimiter, async (req, res, next) => {
   try {
     const credential = String(req.body?.credential || "").trim();
 
@@ -238,7 +248,7 @@ router.post("/google", async (req, res, next) => {
   }
 });
 
-router.post("/forgot-password/request", async (req, res, next) => {
+router.post("/forgot-password/request", authWriteLimiter, async (req, res, next) => {
   try {
     const email = normalizeEmail(req.body?.email);
 
@@ -294,7 +304,7 @@ router.post("/forgot-password/request", async (req, res, next) => {
   }
 });
 
-router.post("/forgot-password/verify", async (req, res, next) => {
+router.post("/forgot-password/verify", authWriteLimiter, async (req, res, next) => {
   try {
     const email = normalizeEmail(req.body?.email);
     const otp = String(req.body?.otp || "").trim();
@@ -345,7 +355,7 @@ router.post("/forgot-password/verify", async (req, res, next) => {
   }
 });
 
-router.post("/forgot-password/reset", async (req, res, next) => {
+router.post("/forgot-password/reset", authWriteLimiter, async (req, res, next) => {
   try {
     const email = normalizeEmail(req.body?.email);
     const otp = String(req.body?.otp || "").trim();

@@ -1,6 +1,8 @@
 # EventPulse
 
-Full-stack event discovery app with a React frontend and an Express + MySQL API.
+Full-stack event discovery app with a React frontend, an Express API, and TiDB Cloud as the production database.
+
+Deployment details for Render + TiDB Cloud are documented in [docs/deployment-render-tidb.md](./docs/deployment-render-tidb.md).
 
 # Members
 1. Ansh Vohra (2310991611)

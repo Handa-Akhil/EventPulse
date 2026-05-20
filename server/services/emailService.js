@@ -1,13 +1,11 @@
 import nodemailer from "nodemailer";
 import { config } from "../config.js";
-import fs from "fs";
 
-let transporter = null;
+let transporter;
 
-// Initialize transporter with proper configuration
 function getTransporter() {
   if (!transporter) {
-    const mailConfig = {
+    transporter = nodemailer.createTransport({
       host: config.mail.host,
       port: config.mail.port,
       secure: config.mail.secure,
@@ -15,28 +13,19 @@ function getTransporter() {
         user: config.mail.user,
         pass: config.mail.pass,
       },
-    };
-
-    // Log configuration (without exposing password)
-    console.log(`📧 Email Config: host=${mailConfig.host}, port=${mailConfig.port}, user=${mailConfig.auth.user}`);
-    
-    transporter = nodemailer.createTransport(mailConfig);
+    });
   }
+
   return transporter;
 }
 
 export async function sendEmail(to, subject, text, html) {
   if (!config.mail.user || !config.mail.pass) {
-    const errorMsg = `[${new Date().toISOString()}] ❌ Email configuration missing: SMTP_USER (${config.mail.user}) or SMTP_PASS is not set.\n`;
-    fs.appendFileSync("debug-email.log", errorMsg);
-    console.error(errorMsg);
-    throw new Error("Email configuration missing");
+    throw new Error("Email configuration missing. Set SMTP_USER and SMTP_PASS.");
   }
 
   try {
-    const transporter = getTransporter();
-    
-    const info = await transporter.sendMail({
+    const info = await getTransporter().sendMail({
       from: config.mail.from || `"EventPulse" <${config.mail.user}>`,
       to,
       subject,
@@ -44,14 +33,20 @@ export async function sendEmail(to, subject, text, html) {
       html: html || text,
     });
 
-    const successMsg = `[${new Date().toISOString()}] ✉️ Email sent successfully to ${to}: ${info.response}\n`;
-    fs.appendFileSync("debug-email.log", successMsg);
-    console.log(successMsg);
+    if (config.logging.enableEmailDebug) {
+      console.info("Email sent", {
+        to,
+        response: info.response,
+      });
+    }
+
     return info;
   } catch (error) {
-    const failMsg = `[${new Date().toISOString()}] ❌ Email sending failed to ${to}: ${error.message}\nError Stack: ${error.code}\n`;
-    fs.appendFileSync("debug-email.log", failMsg);
-    console.error(failMsg);
+    console.error("Email delivery failed", {
+      to,
+      code: error.code,
+      message: error.message,
+    });
     throw error;
   }
 }

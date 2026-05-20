@@ -1,65 +1,116 @@
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api") + "/admin";
+import {
+  clearAdminSessionToken,
+  getAdminSessionToken,
+  saveAdminSessionToken,
+} from "./adminSession";
 
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL || "/api"}/admin`;
 
-export const getPendingEvents = async () => {
-  const res = await fetch(`${BASE_URL}/pending-events`);
-  return res.json();
-};
+async function adminRequest(path = "", options = {}) {
+  const token = getAdminSessionToken();
+  const headers = new Headers(options.headers || {});
 
+  if (options.body !== undefined && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
-export const approveEvent = async (id) => {
-  await fetch(`${BASE_URL}/approve/${id}`, {
+  if (token && options.includeAuth !== false) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${BASE_URL}${path}`, {
+    method: options.method || "GET",
+    headers,
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+  });
+
+  const contentType = response.headers.get("content-type") || "";
+  const payload = contentType.includes("application/json")
+    ? await response.json()
+    : await response.text();
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearAdminSessionToken();
+    }
+
+    const message =
+      typeof payload === "object" && payload && "message" in payload
+        ? payload.message
+        : `Request failed (${response.status})`;
+
+    throw new Error(message);
+  }
+
+  return payload;
+}
+
+export async function loginAdmin(email, password) {
+  const response = await adminRequest("/login", {
+    method: "POST",
+    body: { email, password },
+    includeAuth: false,
+  });
+
+  if (response.token) {
+    saveAdminSessionToken(response.token);
+  }
+
+  return response;
+}
+
+export async function logoutAdmin() {
+  try {
+    if (getAdminSessionToken()) {
+      await adminRequest("/logout", { method: "POST" });
+    }
+  } finally {
+    clearAdminSessionToken();
+  }
+}
+
+export function isAdminSessionActive() {
+  return Boolean(getAdminSessionToken());
+}
+
+export async function getAdminSession() {
+  return adminRequest("/session");
+}
+
+export async function getPendingEvents() {
+  return adminRequest("/pending-events");
+}
+
+export async function approveEvent(id) {
+  return adminRequest(`/approve/${id}`, {
     method: "POST",
   });
-};
+}
 
-
-export const rejectEvent = async (id, reason) => {
-  await fetch(`${BASE_URL}/reject/${id}`, {
+export async function rejectEvent(id, reason) {
+  return adminRequest(`/reject/${id}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ reason }),
+    body: { reason },
   });
-};
+}
 
+export async function getAllEvents() {
+  return adminRequest("/all-events");
+}
 
-export const loginAdmin = async (email, password) => {
-  const res = await fetch(`${BASE_URL}/login`, {
+export async function addEventManual(payload) {
+  return adminRequest("", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: payload,
   });
-  return res.json(); 
-};
+}
 
+export async function getAnalytics() {
+  return adminRequest("/analytics");
+}
 
-export const getAllEvents = async () => {
-  const res = await fetch(`${BASE_URL}/all-events`);
-  return res.json();
-};
-
-
-export const addEventManual = async (payload) => {
-  const res = await fetch(`${BASE_URL}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  return res.json();
-};
-
-
-export const getAnalytics = async () => {
-  const res = await fetch(`${BASE_URL}/analytics`);
-  return res.json();
-};
-
-
-export const deleteEvent = async (id) => {
-  const res = await fetch(`${BASE_URL}/${id}`, {
+export async function deleteEvent(id) {
+  return adminRequest(`/${id}`, {
     method: "DELETE",
   });
-  return res.json();
-};
+}

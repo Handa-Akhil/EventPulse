@@ -22,6 +22,7 @@ async function request(path, options = {}) {
     method: options.method || "GET",
     headers,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    credentials: options.credentials || "same-origin",
   });
 
   const contentType = response.headers.get("content-type") || "";
@@ -270,4 +271,17 @@ export async function markNotificationRead(id) {
 
 export async function markAllNotificationsRead() {
   await request("/notifications/read-all", { method: "PUT" });
+}
+
+export async function fetchFavoriteIds() {
+  const response = await request("/favorites/ids");
+  return response.favoriteIds;
+}
+
+export async function toggleFavorite(eventId) {
+  const response = await request(`/favorites/${eventId}`, {
+    method: "POST",
+  });
+
+  return response.favorited;
 }

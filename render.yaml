@@ -1,0 +1,68 @@
+services:
+  - type: web
+    name: eventpulse
+    runtime: node
+    buildCommand: npm install && npm run build
+    preDeployCommand: npm run db:bootstrap
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: TRUST_PROXY
+        value: "true"
+      - key: SERVE_STATIC_CLIENT
+        value: "true"
+      - key: TIDB_ENABLE_SSL
+        value: "true"
+      - key: DB_CREATE_IF_MISSING
+        value: "true"
+      - key: SEED_SAMPLE_EVENTS
+        value: "true"
+      - key: PUBLIC_APP_URL
+        sync: false
+      - key: CLIENT_ORIGINS
+        sync: false
+      - key: AUTH_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_AUTH_SECRET
+        sync: false
+      - key: TIDB_HOST
+        sync: false
+      - key: TIDB_PORT
+        sync: false
+      - key: TIDB_USER
+        sync: false
+      - key: TIDB_PASSWORD
+        sync: false
+      - key: TIDB_DB_NAME
+        sync: false
+      - key: TIDB_CA_PATH
+        sync: false
+      - key: TIDB_CA_CERT
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false

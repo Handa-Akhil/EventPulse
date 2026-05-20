@@ -3,12 +3,17 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "engines": {
+    "node": ">=20 <25"
+  },
   "scripts": {
     "dev": "vite",
     "dev:client": "vite",
     "dev:server": "node --watch server/index.js",
     "dev:full": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "build": "vite build",
+    "db:bootstrap": "node server/scripts/bootstrapDatabase.js",
+    "db:check": "node test-db.js",
     "preview": "vite preview",
     "start": "node server/index.js",
     "test": "cross-env NODE_ENV=test vitest run",
@@ -17,10 +22,13 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.1",
+    "express-rate-limit": "^8.5.2",
     "google-auth-library": "^10.6.2",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "leaflet": "^1.9.4",
     "mysql2": "^3.11.5",

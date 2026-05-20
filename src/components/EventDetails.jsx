@@ -5,6 +5,7 @@ import {
   fetchEventDetails,
   fetchSavedLocation,
 } from "../services/api";
+import { getSessionClaims } from "../services/session.js";
 import ShareButton from "./ShareButton";
 import ReviewSection from "./ReviewSection";
 import LiveCounter from "./LiveCounter";
@@ -78,13 +79,8 @@ export default function EventDetails() {
 
   // Extract user ID from JWT for review checking
   useEffect(() => {
-    try {
-      const token = localStorage.getItem("eventpulse_session_token_v1");
-      if (token) {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        setCurrentUserId(payload.userId);
-      }
-    } catch {}
+    const claims = getSessionClaims();
+    setCurrentUserId(claims?.userId || null);
   }, []);
 
   const adjustQuantity = (delta) => {

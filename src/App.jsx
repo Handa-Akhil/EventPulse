@@ -10,6 +10,10 @@ import CreateEvent from "./components/CreateEvent";
 import MyTickets from "./components/MyTickets";
 
 import {
+  connectSocket,
+  disconnectSocket,
+} from "./socket";
+import {
   getSessionUser,
   loginWithGoogle,
   loginUser,
@@ -17,6 +21,11 @@ import {
   registerUser,
   updateUserPreferences,
 } from "./services/api";
+import {
+  getAdminSession,
+  isAdminSessionActive,
+  logoutAdmin,
+} from "./services/adminService";
 
 
 function ProtectedRoute({ currentUser, children }) {
@@ -34,17 +43,16 @@ export default function App() {
   const [chatbotWelcomeIntent, setChatbotWelcomeIntent] = useState(null);
 
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(
-    () => localStorage.getItem("adminLoggedIn") === "true"
+    () => isAdminSessionActive()
   );
 
   const handleAdminLogin = () => {
     setIsAdminLoggedIn(true);
-    localStorage.setItem("adminLoggedIn", "true");
   };
 
-  const handleAdminLogout = () => {
+  const handleAdminLogout = async () => {
+    await logoutAdmin();
     setIsAdminLoggedIn(false);
-    localStorage.removeItem("adminLoggedIn");
   };
 
 
@@ -79,6 +87,29 @@ export default function App() {
   useEffect(() => {
     setIsPreferenceOpen(Boolean(currentUser && !currentUser.hasOnboarded));
   }, [currentUser]);
+
+  useEffect(() => {
+    if (!isAdminLoggedIn) {
+      return;
+    }
+
+    void getAdminSession().catch(() => {
+      setIsAdminLoggedIn(false);
+    });
+  }, [isAdminLoggedIn]);
+
+  useEffect(() => {
+    if (!currentUser?.id) {
+      disconnectSocket();
+      return;
+    }
+
+    connectSocket();
+
+    return () => {
+      disconnectSocket();
+    };
+  }, [currentUser?.id]);
 
   const handleLogin = async (credentials) => {
     const user = await loginUser(credentials);
@@ -220,7 +251,7 @@ export default function App() {
           path="/admin"
           element={
             isAdminLoggedIn ? (
-              <AdminPanel onLogout={handleAdminLogout} />
+              <AdminPanel onLogout={() => void handleAdminLogout()} />
             ) : (
               <Navigate to="/admin/login" replace />
             )

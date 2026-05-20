@@ -1,22 +1,43 @@
 import { io } from "socket.io-client";
 import { getSessionToken } from "./services/session.js";
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:4000";
+function getSocketBaseUrl() {
+  if (import.meta.env.VITE_SOCKET_URL) {
+    return import.meta.env.VITE_SOCKET_URL;
+  }
 
-const socket = io(SOCKET_URL, {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+
+  return undefined;
+}
+
+const socket = io(getSocketBaseUrl(), {
   autoConnect: false,
   transports: ["websocket", "polling"],
 });
 
-export function connectSocket(userId) {
+export function connectSocket() {
+  const token = getSessionToken();
+
+  if (!token) {
+    return;
+  }
+
+  socket.auth = { token };
+
   if (!socket.connected) {
     socket.connect();
   }
-  socket.emit("register", userId);
 }
 
 export function disconnectSocket() {
-  socket.disconnect();
+  socket.auth = {};
+
+  if (socket.connected) {
+    socket.disconnect();
+  }
 }
 
 export default socket;

@@ -1,4 +1,6 @@
-const BASE_URL = "http://localhost:4000/api/admin";
+const baseOrigin =
+  process.env.PUBLIC_APP_URL || process.env.RENDER_EXTERNAL_URL || "";
+const BASE_URL = `${baseOrigin}/api/admin`;
 
 
 export const adminLogin = async (email, password) => {

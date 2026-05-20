@@ -1,41 +1,64 @@
 import mysql from "mysql2/promise";
 import { config } from "../config.js";
+import { getMysqlConnectionOptions } from "./connectionOptions.js";
 
 let poolPromise;
 
-async function ensureDatabaseExists() {
-  const connection = await mysql.createConnection({
-    host: config.db.host,
-    port: config.db.port,
-    user: config.db.user,
-    password: config.db.password,
-  });
+function escapeIdentifier(value) {
+  return String(value || "").replaceAll("`", "");
+}
 
-  const databaseName = config.db.name.replaceAll("`", "");
-  await connection.query(
-    `CREATE DATABASE IF NOT EXISTS \`${databaseName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+async function ensureDatabaseExistsIfNeeded() {
+  if (!config.db.createIfMissing) {
+    return;
+  }
+
+  const connection = await mysql.createConnection(
+    getMysqlConnectionOptions({ includeDatabase: false }),
   );
-  await connection.end();
+
+  try {
+    const databaseName = escapeIdentifier(config.db.name);
+    await connection.query(
+      `CREATE DATABASE IF NOT EXISTS \`${databaseName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    );
+  } finally {
+    await connection.end();
+  }
 }
 
 export async function getPool() {
   if (!poolPromise) {
     poolPromise = (async () => {
-      await ensureDatabaseExists();
+      await ensureDatabaseExistsIfNeeded();
 
       return mysql.createPool({
-        host: config.db.host,
-        port: config.db.port,
-        user: config.db.user,
-        password: config.db.password,
-        database: config.db.name,
+        ...getMysqlConnectionOptions(),
         waitForConnections: true,
-        connectionLimit: 10,
+        connectionLimit: config.db.connectionLimit,
+        queueLimit: config.db.queueLimit,
         namedPlaceholders: true,
         dateStrings: true,
+        decimalNumbers: true,
       });
     })();
   }
 
   return poolPromise;
+}
+
+export async function pingDatabase() {
+  const pool = await getPool();
+  const [rows] = await pool.query("SELECT VERSION() AS version");
+  return rows[0] || { version: "unknown" };
+}
+
+export async function closePool() {
+  if (!poolPromise) {
+    return;
+  }
+
+  const pool = await poolPromise;
+  await pool.end();
+  poolPromise = undefined;
 }
