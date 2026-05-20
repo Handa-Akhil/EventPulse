@@ -35,6 +35,7 @@ const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
 const isTest = env === "test";
 const isRender = String(process.env.RENDER || "").toLowerCase() === "true";
+const shouldServeStaticClient = isProduction || isRender;
 
 function parseDatabaseEnv() {
   const connectionString =
@@ -108,7 +109,7 @@ export const config = {
     trustProxy: toBoolean(process.env.TRUST_PROXY, isRender),
     publicAppUrl,
     allowedOrigins,
-    serveStaticClient: toBoolean(process.env.SERVE_STATIC_CLIENT, isProduction),
+    serveStaticClient: toBoolean(process.env.SERVE_STATIC_CLIENT, shouldServeStaticClient),
   },
   auth: {
     secret: getRequiredEnvValue(
