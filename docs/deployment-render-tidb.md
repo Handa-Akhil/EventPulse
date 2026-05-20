@@ -22,7 +22,7 @@
 
 1. Create a new Web Service from this repo.
 2. Use the included `render.yaml`, or mirror these values manually:
-   - Build Command: `npm install && npm run build`
+   - Build Command: `npm install --include=dev && npm run build`
    - Pre-Deploy Command: `npm run db:bootstrap`
    - Start Command: `npm start`
    - Health Check Path: `/api/health`

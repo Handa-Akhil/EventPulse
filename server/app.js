@@ -19,6 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.join(__dirname, "..");
 const distPath = path.join(projectRoot, "dist");
+const clientIndexPath = path.join(distPath, "index.html");
 
 function createCorsOptions() {
   const allowedOrigins = new Set(config.server.allowedOrigins);
@@ -76,7 +77,7 @@ export function createApp() {
     res.status(404).json({ message: "API endpoint not found." });
   });
 
-  if (config.server.serveStaticClient && fs.existsSync(distPath)) {
+  if (fs.existsSync(clientIndexPath)) {
     app.use(express.static(distPath));
     app.get("*", (req, res, next) => {
       if (req.path.startsWith("/api")) {
@@ -84,7 +85,18 @@ export function createApp() {
         return;
       }
 
-      res.sendFile(path.join(distPath, "index.html"));
+      res.sendFile(clientIndexPath);
+    });
+  } else if (config.server.serveStaticClient) {
+    app.get("*", (req, res, next) => {
+      if (req.path.startsWith("/api")) {
+        next();
+        return;
+      }
+
+      res.status(503).type("text/plain").send(
+        "Client build not found. Run `npm run build` before starting the server.",
+      );
     });
   }
 
