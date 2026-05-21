@@ -10,6 +10,89 @@ import { emitToUser, emitToEventRoom } from "../index.js";
 
 const router = express.Router();
 
+function canSendBookingEmail(user) {
+  return Boolean(user?.email && config.mail.user && config.mail.pass);
+}
+
+function createBookingEmail(user, event, booking) {
+  const reference = booking.id.slice(-6).toUpperCase();
+  const text = [
+    `Hi ${user.name || "there"},`,
+    "",
+    "Your EventPulse booking has been confirmed.",
+    "",
+    `Event: ${event.title}`,
+    `Venue: ${event.venue}`,
+    `Date: ${booking.dateLabel}`,
+    `Time Slot: ${booking.slot}`,
+    `Tickets: ${booking.quantity}`,
+    `Total Paid: Rs. ${booking.total}`,
+    `Booking Reference: ${reference}`,
+    "",
+    "Open EventPulse and go to My Tickets to view your e-ticket and QR code.",
+    "",
+    "Thank you for using EventPulse.",
+  ].join("\n");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
+      <h2 style="margin: 0 0 12px;">Booking confirmed</h2>
+      <p>Hi ${user.name || "there"}, your EventPulse booking has been confirmed.</p>
+      <div style="border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin: 18px 0;">
+        <p><strong>Event:</strong> ${event.title}</p>
+        <p><strong>Venue:</strong> ${event.venue}</p>
+        <p><strong>Date:</strong> ${booking.dateLabel}</p>
+        <p><strong>Time Slot:</strong> ${booking.slot}</p>
+        <p><strong>Tickets:</strong> ${booking.quantity}</p>
+        <p><strong>Total Paid:</strong> Rs. ${booking.total}</p>
+        <p><strong>Booking Reference:</strong> ${reference}</p>
+      </div>
+      <p>Open EventPulse and go to <strong>My Tickets</strong> to view your e-ticket and QR code.</p>
+      <p>Thank you for using EventPulse.</p>
+    </div>
+  `;
+
+  return {
+    subject: `EventPulse booking confirmed: ${event.title}`,
+    text,
+    html,
+  };
+}
+
+async function sendBookingEmailSafely({ user, event, booking }) {
+  if (!canSendBookingEmail(user)) {
+    console.warn("Booking confirmation email skipped: SMTP is not configured.");
+    return;
+  }
+
+  try {
+    const email = createBookingEmail(user, event, booking);
+    await sendEmail(user.email, email.subject, email.text, email.html);
+    console.info("Booking confirmation email queued by SMTP", {
+      to: user.email,
+      bookingId: booking.id,
+    });
+  } catch (emailError) {
+    console.error("Booking confirmation email failed", {
+      to: user.email,
+      bookingId: booking.id,
+      code: emailError?.code,
+      message: emailError?.message,
+    });
+  }
+}
+
+function queueBookingConfirmationEmail(payload) {
+  const schedule =
+    typeof setImmediate === "function"
+      ? setImmediate
+      : (callback) => globalThis.setTimeout(callback, 0);
+
+  schedule(() => {
+    void sendBookingEmailSafely(payload);
+  });
+}
+
 router.get("/", requireAuth, async (req, res, next) => {
   try {
     const limit = Number.isFinite(Number(req.query.limit))
@@ -220,6 +303,25 @@ router.post("/", requireAuth, async (req, res, next) => {
     } catch (socketError) {
       console.error("Socket emit error:", socketError.message);
     }
+
+    const emailDelivery = canSendBookingEmail(req.user)
+      ? {
+          status: "queued",
+          message: `Booking confirmed. A confirmation email is being sent to ${req.user.email}.`,
+        }
+      : {
+          status: "not_configured",
+          message: "Booking confirmed. Email delivery is not configured on the server.",
+        };
+
+    res.status(201).json({ booking, qrDataUrl, emailDelivery });
+
+    queueBookingConfirmationEmail({
+      user: req.user,
+      event,
+      booking,
+    });
+    return;
 
     // Email should not break booking success
     if (req.user?.email && config.mail.user && config.mail.pass) {

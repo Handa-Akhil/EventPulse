@@ -9,6 +9,9 @@ function getTransporter() {
       host: config.mail.host,
       port: config.mail.port,
       secure: config.mail.secure,
+      connectionTimeout: config.mail.timeoutMs,
+      greetingTimeout: config.mail.timeoutMs,
+      socketTimeout: config.mail.timeoutMs,
       auth: {
         user: config.mail.user,
         pass: config.mail.pass,

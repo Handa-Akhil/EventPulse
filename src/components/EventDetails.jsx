@@ -109,8 +109,12 @@ export default function EventDetails() {
       const booking = response.booking;
       const qrDataUrl = response.qrDataUrl;
 
+      const emailMessage = response.emailDelivery?.message
+        ? ` ${response.emailDelivery.message}`
+        : "";
+
       setBookingMessage(
-        `Booking confirmed. Reference ${booking.id.slice(-6).toUpperCase()} for ${booking.quantity} ticket(s) at ${booking.slot}.`,
+        `Booking confirmed. Reference ${booking.id.slice(-6).toUpperCase()} for ${booking.quantity} ticket(s) at ${booking.slot}.${emailMessage}`,
       );
 
       if (typeof event.seatsLeft === "number") {

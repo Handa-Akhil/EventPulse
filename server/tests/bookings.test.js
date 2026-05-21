@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 let mockExecute;
 let mockConnection;
+let mockSendEmail;
 
 vi.mock("../db/pool.js", () => ({
   getPool: vi.fn(async () => ({
@@ -33,7 +34,12 @@ vi.mock("../config.js", () => ({
       name: "Test Admin",
     },
     db: {},
-    mail: {},
+    mail: {
+      user: "smtp@test.com",
+      pass: "smtp-pass",
+      from: "EventPulse <smtp@test.com>",
+      timeoutMs: 8000,
+    },
     logging: {},
     firebase: {
       projectId: "",
@@ -44,6 +50,10 @@ vi.mock("../config.js", () => ({
 vi.mock("../index.js", () => ({
   emitToUser: vi.fn(),
   emitToEventRoom: vi.fn(),
+}));
+
+vi.mock("../services/emailService.js", () => ({
+  sendEmail: (...args) => mockSendEmail(...args),
 }));
 
 const testUser = {
@@ -93,6 +103,8 @@ describe("Bookings API", () => {
       rollback: vi.fn(),
       release: vi.fn(),
     };
+
+    mockSendEmail = vi.fn(() => new Promise(() => {}));
   });
 
   function getToken() {
@@ -175,5 +187,47 @@ describe("Bookings API", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toContain("Only");
+  });
+
+  it("should confirm booking without waiting for confirmation email delivery", async () => {
+    mockExecute.mockResolvedValueOnce([[testUser]]);
+
+    const bookingRow = {
+      id: "booking-1",
+      user_id: "user-1",
+      event_id: "event-1",
+      title: eventRow.title,
+      venue: eventRow.venue,
+      date_label: eventRow.date_label,
+      slot: "7:00 PM",
+      quantity: 2,
+      total: 1000,
+      created_at: "2026-05-21 15:00:00",
+    };
+
+    mockConnection.execute
+      .mockResolvedValueOnce([[eventRow]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([[bookingRow]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+
+    const { createApp } = await import("../app.js");
+    const app = createApp();
+
+    const res = await request(app)
+      .post("/api/bookings")
+      .set("Authorization", `Bearer ${getToken()}`)
+      .send({
+        eventId: "event-1",
+        slot: "7:00 PM",
+        quantity: 2,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.booking.id).toBe("booking-1");
+    expect(res.body.qrDataUrl).toContain("data:image/png;base64,");
+    expect(res.body.emailDelivery.status).toBe("queued");
+    expect(mockConnection.commit).toHaveBeenCalledOnce();
   });
 });

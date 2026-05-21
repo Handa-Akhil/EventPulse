@@ -182,6 +182,7 @@ export const config = {
     secure: toBoolean(process.env.SMTP_SECURE, true),
     user: process.env.SMTP_USER || process.env.EMAIL_USER || "",
     pass: process.env.SMTP_PASS || process.env.EMAIL_PASS || "",
+    timeoutMs: toNumber(process.env.SMTP_TIMEOUT_MS || process.env.EMAIL_TIMEOUT_MS, 8000),
     from:
       process.env.MAIL_FROM ||
       `EventPulse <${process.env.SMTP_USER || process.env.EMAIL_USER || ""}>`,

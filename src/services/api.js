@@ -52,6 +52,11 @@ async function request(path, options = {}) {
 async function sendRequest(path, options = {}) {
   const token = getSessionToken();
   const headers = new Headers(options.headers || {});
+  const timeoutMs = Number.isFinite(options.timeoutMs) ? options.timeoutMs : 0;
+  const controller = timeoutMs > 0 ? new AbortController() : null;
+  const timeoutId = controller
+    ? globalThis.setTimeout(() => controller.abort(), timeoutMs)
+    : null;
 
   if (options.body !== undefined && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
@@ -69,12 +74,22 @@ async function sendRequest(path, options = {}) {
       headers,
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
       credentials: options.credentials || "same-origin",
+      signal: controller?.signal,
     });
   } catch (error) {
-    throw new ApiError("Unable to reach the EventPulse API. Please try again.", {
+    const message =
+      error?.name === "AbortError"
+        ? "The request took too long. Please check your connection and try again."
+        : "Unable to reach the EventPulse API. Please try again.";
+
+    throw new ApiError(message, {
       isNetworkError: true,
       payload: error,
     });
+  } finally {
+    if (timeoutId) {
+      globalThis.clearTimeout(timeoutId);
+    }
   }
 
   const contentType = response.headers.get("content-type") || "";
@@ -285,6 +300,7 @@ export async function createBooking(payload) {
   const response = await request("/bookings", {
     method: "POST",
     body: payload,
+    timeoutMs: 15000,
   });
 
   return response;
