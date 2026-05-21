@@ -4,7 +4,7 @@ import {
   getFirebaseGoogleAuthErrorMessage,
   getFirebaseGoogleRedirectResult,
   isFirebaseAuthConfigured,
-  startFirebaseGoogleRedirect,
+  signInWithFirebaseGoogle,
 } from "../services/firebaseAuth";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 
@@ -188,9 +188,14 @@ export default function AuthPage({ onGoogleLogin, onLogin, onSignup }) {
     setIsSubmitting(true);
 
     try {
-      await startFirebaseGoogleRedirect();
+      const result = await signInWithFirebaseGoogle();
+
+      await onGoogleLogin({ idToken: result.idToken });
+
+      startTransition(() => navigate("/"));
     } catch (submissionError) {
       setError(getFirebaseGoogleAuthErrorMessage(submissionError));
+    } finally {
       setIsSubmitting(false);
     }
   };

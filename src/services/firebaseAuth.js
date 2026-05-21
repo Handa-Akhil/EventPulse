@@ -27,6 +27,9 @@ export const isFirebaseAuthConfigured = Boolean(
 
 let persistencePromise = null;
 let googleProvider = null;
+// Firebase redirect results are one-shot. Cache the promise so React StrictMode
+// cannot consume and discard it during the development double-mount cycle.
+let redirectResultPromise = null;
 
 function getFirebaseAuth() {
   if (!isFirebaseAuthConfigured) {
@@ -73,7 +76,9 @@ export async function getFirebaseGoogleRedirectResult() {
 
   await persistencePromise;
 
-  const result = await getRedirectResult(auth);
+  redirectResultPromise ||= getRedirectResult(auth);
+
+  const result = await redirectResultPromise;
 
   if (!result?.user) {
     return null;
@@ -94,6 +99,18 @@ export function getFirebaseGoogleAuthErrorMessage(error) {
 
   if (error?.code === "auth/popup-blocked") {
     return "Allow popups for this site to continue with Google.";
+  }
+
+  if (error?.code === "auth/unauthorized-domain") {
+    return "This domain is not authorized in Firebase Authentication. Add localhost and 127.0.0.1 in Firebase Auth settings.";
+  }
+
+  if (error?.code === "auth/operation-not-allowed") {
+    return "Google sign-in is not enabled in Firebase Authentication.";
+  }
+
+  if (error?.code === "auth/invalid-api-key") {
+    return "Firebase web app configuration is invalid. Check the VITE_FIREBASE_* values in .env.";
   }
 
   return error?.message || "Google login failed. Please try again.";

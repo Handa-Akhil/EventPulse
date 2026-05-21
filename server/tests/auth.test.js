@@ -195,16 +195,33 @@ describe("Auth API", () => {
     expect(res.body.user.email).toBe("rajat@test.com");
   });
 
-  it("should reject Firebase Google login when no account matches the Google email", async () => {
+  it("should create an EventPulse account on first Firebase Google login", async () => {
     mocks.verifyFirebaseIdToken.mockResolvedValueOnce({
       email: "missing@test.com",
       email_verified: true,
+      name: "Missing User",
       firebase: {
         sign_in_provider: "google.com",
       },
     });
 
-    mocks.execute.mockResolvedValueOnce([[]]);
+    mocks.execute
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([
+        [
+          {
+            id: "user-2",
+            name: "Missing User",
+            email: "missing@test.com",
+            password_hash: "generated-google-login-password",
+            preferences_json: "[]",
+            saved_location_json: null,
+            has_onboarded: 0,
+          },
+        ],
+      ]);
 
     const { createApp } = await import("../app.js");
     const app = createApp();
@@ -213,7 +230,9 @@ describe("Auth API", () => {
       idToken: "firebase-id-token",
     });
 
-    expect(res.status).toBe(404);
-    expect(res.body.message).toContain("No EventPulse account matches this Google email");
+    expect(res.status).toBe(200);
+    expect(res.body.token).toBeDefined();
+    expect(res.body.user.email).toBe("missing@test.com");
+    expect(res.body.user.name).toBe("Missing User");
   });
 });

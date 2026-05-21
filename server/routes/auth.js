@@ -39,6 +39,22 @@ function createPasswordResetOtp() {
   return String(randomInt(min, max));
 }
 
+function getGoogleProfileName(payload, email) {
+  const name = String(payload?.name || "").trim();
+
+  if (name.length >= 2) {
+    return name;
+  }
+
+  const emailName = email.split("@")[0]?.replace(/[._-]+/g, " ").trim();
+
+  if (emailName && emailName.length >= 2) {
+    return emailName.replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  return "Google User";
+}
+
 async function clearPasswordResetState(pool, userId) {
   await pool.execute(
     `UPDATE users
@@ -83,6 +99,20 @@ async function getUserByEmail(pool, email) {
   );
 
   return rows[0] || null;
+}
+
+async function createWelcomeNotification(pool, userId, name) {
+  const notifId = randomUUID();
+
+  await pool.execute(
+    "INSERT INTO notifications (id, user_id, message, type) VALUES (?, ?, ?, ?)",
+    [
+      notifId,
+      userId,
+      `Welcome to EventPulse, ${name}! Start exploring and booking amazing events near you.`,
+      "info",
+    ],
+  );
 }
 
 router.post("/signup", authWriteLimiter, async (req, res, next) => {
@@ -144,12 +174,7 @@ router.post("/signup", authWriteLimiter, async (req, res, next) => {
     const user = serializeUser(rows[0]);
     const token = createAuthToken(user.id);
 
-    // Create welcome notification
-    const notifId = randomUUID();
-    await pool.execute(
-      "INSERT INTO notifications (id, user_id, message, type) VALUES (?, ?, ?, ?)",
-      [notifId, userId, `Welcome to EventPulse, ${name}! Start exploring and booking amazing events near you.`, "info"]
-    );
+    await createWelcomeNotification(pool, userId, name);
 
     res.status(201).json({ token, user });
   } catch (error) {
@@ -232,14 +257,33 @@ router.post("/google", authWriteLimiter, async (req, res, next) => {
     }
 
     const pool = await getPool();
-    const userRow = await getUserByEmail(pool, email);
+    let userRow = await getUserByEmail(pool, email);
 
     if (!userRow) {
-      res.status(404).json({
-        message:
-          "No EventPulse account matches this Google email. Sign up first or use the same email as your existing account.",
-      });
-      return;
+      const userId = randomUUID();
+      const name = getGoogleProfileName(payload, email);
+      const passwordHash = await bcrypt.hash(randomUUID(), 10);
+
+      await pool.execute(
+        `INSERT INTO users (
+          id,
+          name,
+          email,
+          password_hash,
+          preferences_json,
+          has_onboarded
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
+        [userId, name, email, passwordHash, JSON.stringify([]), 0],
+      );
+
+      await createWelcomeNotification(pool, userId, name);
+
+      userRow = await getUserByEmail(pool, email);
+
+      if (!userRow) {
+        res.status(500).json({ message: "Failed to create Google account." });
+        return;
+      }
     }
 
     const user = serializeUser(userRow);
