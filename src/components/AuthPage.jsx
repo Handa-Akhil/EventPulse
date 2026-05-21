@@ -4,6 +4,7 @@ import {
   getFirebaseGoogleAuthErrorMessage,
   getFirebaseGoogleRedirectResult,
   isFirebaseAuthConfigured,
+  shouldUseFirebaseGoogleRedirect,
   signInWithFirebaseGoogle,
   startFirebaseGoogleRedirect,
 } from "../services/firebaseAuth";
@@ -189,6 +190,11 @@ export default function AuthPage({ onGoogleLogin, onLogin, onSignup }) {
     setIsSubmitting(true);
 
     try {
+      if (shouldUseFirebaseGoogleRedirect()) {
+        await startFirebaseGoogleRedirect();
+        return;
+      }
+
       const result = await signInWithFirebaseGoogle();
 
       if (!result?.idToken) {

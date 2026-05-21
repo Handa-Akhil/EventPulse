@@ -25,6 +25,18 @@ export const isFirebaseAuthConfigured = Boolean(
     firebaseConfig.appId,
 );
 
+export function shouldUseFirebaseGoogleRedirect() {
+  if (import.meta.env.PROD) {
+    return true;
+  }
+
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return !["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+}
+
 let persistencePromise = null;
 let googleProvider = null;
 // Firebase redirect results are one-shot. Cache the promise so React StrictMode
