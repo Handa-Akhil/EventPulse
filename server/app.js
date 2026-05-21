@@ -49,6 +49,9 @@ export function createApp() {
     helmet({
       contentSecurityPolicy: false,
       crossOriginEmbedderPolicy: false,
+      crossOriginOpenerPolicy: {
+        policy: "same-origin-allow-popups",
+      },
     }),
   );
   app.use(compression());

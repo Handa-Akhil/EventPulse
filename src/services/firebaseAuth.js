@@ -4,6 +4,7 @@ import {
   getAuth,
   getRedirectResult,
   GoogleAuthProvider,
+  onAuthStateChanged,
   setPersistence,
   signInWithPopup,
   signInWithRedirect,
@@ -25,23 +26,32 @@ export const isFirebaseAuthConfigured = Boolean(
     firebaseConfig.appId,
 );
 
-export function shouldUseFirebaseGoogleRedirect() {
-  if (import.meta.env.PROD) {
-    return true;
-  }
-
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  return !["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
-}
-
 let persistencePromise = null;
 let googleProvider = null;
+const REDIRECT_PENDING_KEY = "eventpulse_firebase_google_redirect_pending_v1";
 // Firebase redirect results are one-shot. Cache the promise so React StrictMode
 // cannot consume and discard it during the development double-mount cycle.
 let redirectResultPromise = null;
+
+function getBrowserSessionStorage() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.sessionStorage;
+}
+
+function markRedirectPending() {
+  getBrowserSessionStorage()?.setItem(REDIRECT_PENDING_KEY, "true");
+}
+
+function clearRedirectPending() {
+  getBrowserSessionStorage()?.removeItem(REDIRECT_PENDING_KEY);
+}
+
+function isRedirectPending() {
+  return getBrowserSessionStorage()?.getItem(REDIRECT_PENDING_KEY) === "true";
+}
 
 function getFirebaseAuth() {
   if (!isFirebaseAuthConfigured) {
@@ -76,19 +86,71 @@ export async function startFirebaseGoogleRedirect() {
   const { auth, persistencePromise } = getFirebaseAuth();
 
   await persistencePromise;
+  markRedirectPending();
   await signInWithRedirect(auth, getGoogleProvider());
 }
 
 export async function getFirebaseGoogleRedirectResult() {
   const { auth, persistencePromise } = getFirebaseAuth();
+  const wasRedirectPending = isRedirectPending();
 
   await persistencePromise;
 
   redirectResultPromise ||= getRedirectResult(auth);
 
-  const result = await redirectResultPromise;
+  try {
+    const result = await redirectResultPromise;
 
-  return buildGoogleLoginResult(result?.user);
+    if (result?.user) {
+      return buildGoogleLoginResult(result.user);
+    }
+
+    if (!wasRedirectPending) {
+      return null;
+    }
+
+    const redirectedUser = await waitForFirebaseUser(auth);
+    return buildGoogleLoginResult(redirectedUser);
+  } finally {
+    if (wasRedirectPending) {
+      clearRedirectPending();
+    }
+  }
+}
+
+function waitForFirebaseUser(auth, timeoutMs = 5000) {
+  if (auth.currentUser) {
+    return Promise.resolve(auth.currentUser);
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+    let unsubscribe = () => {};
+
+    const finish = (user) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      unsubscribe();
+      resolve(user || null);
+    };
+
+    const timeoutId = globalThis.setTimeout(() => finish(null), timeoutMs);
+
+    unsubscribe = onAuthStateChanged(
+      auth,
+      (user) => {
+        globalThis.clearTimeout(timeoutId);
+        finish(user);
+      },
+      () => {
+        globalThis.clearTimeout(timeoutId);
+        finish(null);
+      },
+    );
+  });
 }
 
 async function buildGoogleLoginResult(user) {
