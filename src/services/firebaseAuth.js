@@ -2,9 +2,11 @@ import { getApps, initializeApp } from "firebase/app";
 import {
   browserLocalPersistence,
   getAuth,
+  getRedirectResult,
   GoogleAuthProvider,
   setPersistence,
   signInWithPopup,
+  signInWithRedirect,
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -59,9 +61,35 @@ export async function signInWithFirebaseGoogle() {
   };
 }
 
+export async function startFirebaseGoogleRedirect() {
+  const { auth, persistencePromise } = getFirebaseAuth();
+
+  await persistencePromise;
+  await signInWithRedirect(auth, getGoogleProvider());
+}
+
+export async function getFirebaseGoogleRedirectResult() {
+  const { auth, persistencePromise } = getFirebaseAuth();
+
+  await persistencePromise;
+
+  const result = await getRedirectResult(auth);
+
+  if (!result?.user) {
+    return null;
+  }
+
+  const idToken = await result.user.getIdToken();
+
+  return {
+    idToken,
+    email: result.user.email || "",
+  };
+}
+
 export function getFirebaseGoogleAuthErrorMessage(error) {
   if (error?.code === "auth/popup-closed-by-user") {
-    return "Google login was cancelled.";
+    return "Google login did not finish. Please try again.";
   }
 
   if (error?.code === "auth/popup-blocked") {

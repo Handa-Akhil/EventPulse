@@ -1,9 +1,10 @@
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   getFirebaseGoogleAuthErrorMessage,
+  getFirebaseGoogleRedirectResult,
   isFirebaseAuthConfigured,
-  signInWithFirebaseGoogle,
+  startFirebaseGoogleRedirect,
 } from "../services/firebaseAuth";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 
@@ -71,6 +72,48 @@ export default function AuthPage({ onGoogleLogin, onLogin, onSignup }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const isGoogleLoginEnabled = Boolean(isFirebaseAuthConfigured && onGoogleLogin);
+
+  useEffect(() => {
+    if (!isGoogleLoginEnabled) {
+      return undefined;
+    }
+
+    let ignore = false;
+
+    async function completeGoogleRedirectLogin() {
+      try {
+        const result = await getFirebaseGoogleRedirectResult();
+
+        if (ignore || !result?.idToken) {
+          return;
+        }
+
+        setError("");
+        setNotice("");
+        setIsSubmitting(true);
+
+        await onGoogleLogin({ idToken: result.idToken });
+
+        if (!ignore) {
+          startTransition(() => navigate("/"));
+        }
+      } catch (redirectError) {
+        if (!ignore) {
+          setError(getFirebaseGoogleAuthErrorMessage(redirectError));
+        }
+      } finally {
+        if (!ignore) {
+          setIsSubmitting(false);
+        }
+      }
+    }
+
+    void completeGoogleRedirectLogin();
+
+    return () => {
+      ignore = true;
+    };
+  }, [isGoogleLoginEnabled, navigate, onGoogleLogin]);
 
   const handleLoginChange = (event) => {
     const { name, value } = event.target;
@@ -145,13 +188,9 @@ export default function AuthPage({ onGoogleLogin, onLogin, onSignup }) {
     setIsSubmitting(true);
 
     try {
-      const { idToken } = await signInWithFirebaseGoogle();
-
-      await onGoogleLogin({ idToken });
-      startTransition(() => navigate("/"));
+      await startFirebaseGoogleRedirect();
     } catch (submissionError) {
       setError(getFirebaseGoogleAuthErrorMessage(submissionError));
-    } finally {
       setIsSubmitting(false);
     }
   };
