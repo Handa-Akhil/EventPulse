@@ -104,11 +104,38 @@ describe("Bookings API", () => {
       release: vi.fn(),
     };
 
-    mockSendEmail = vi.fn(() => new Promise(() => {}));
+    mockSendEmail = vi.fn(async () => ({ response: "250 OK" }));
   });
 
   function getToken() {
     return jwt.sign({ userId: "user-1" }, "test-secret");
+  }
+
+  function createBookingRow(overrides = {}) {
+    return {
+      id: "booking-1",
+      user_id: "user-1",
+      event_id: "event-1",
+      title: eventRow.title,
+      venue: eventRow.venue,
+      date_label: eventRow.date_label,
+      slot: "7:00 PM",
+      quantity: 2,
+      total: 1000,
+      created_at: "2026-05-21 15:00:00",
+      ...overrides,
+    };
+  }
+
+  function mockSuccessfulBooking(bookingRow = createBookingRow()) {
+    mockConnection.execute
+      .mockResolvedValueOnce([[eventRow]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([[bookingRow]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+
+    return bookingRow;
   }
 
   it("should reject booking without valid data", async () => {
@@ -189,28 +216,9 @@ describe("Bookings API", () => {
     expect(res.body.message).toContain("Only");
   });
 
-  it("should confirm booking without waiting for confirmation email delivery", async () => {
+  it("should confirm booking after SMTP accepts the confirmation email", async () => {
     mockExecute.mockResolvedValueOnce([[testUser]]);
-
-    const bookingRow = {
-      id: "booking-1",
-      user_id: "user-1",
-      event_id: "event-1",
-      title: eventRow.title,
-      venue: eventRow.venue,
-      date_label: eventRow.date_label,
-      slot: "7:00 PM",
-      quantity: 2,
-      total: 1000,
-      created_at: "2026-05-21 15:00:00",
-    };
-
-    mockConnection.execute
-      .mockResolvedValueOnce([[eventRow]])
-      .mockResolvedValueOnce([{ affectedRows: 1 }])
-      .mockResolvedValueOnce([{ affectedRows: 1 }])
-      .mockResolvedValueOnce([[bookingRow]])
-      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+    mockSuccessfulBooking();
 
     const { createApp } = await import("../app.js");
     const app = createApp();
@@ -227,7 +235,41 @@ describe("Bookings API", () => {
     expect(res.status).toBe(201);
     expect(res.body.booking.id).toBe("booking-1");
     expect(res.body.qrDataUrl).toContain("data:image/png;base64,");
-    expect(res.body.emailDelivery.status).toBe("queued");
+    expect(res.body.emailDelivery.status).toBe("sent");
+    expect(res.body.emailDelivery.emailSent).toBe(true);
+    expect(mockSendEmail).toHaveBeenCalledOnce();
+    expect(mockSendEmail).toHaveBeenCalledWith(
+      testUser.email,
+      "EventPulse booking confirmed: Music Night",
+      expect.stringContaining("Booking Reference: KING-1"),
+      expect.stringContaining("<strong>Event:</strong> Music Night"),
+    );
+    expect(mockConnection.commit).toHaveBeenCalledOnce();
+  });
+
+  it("should keep the booking successful when confirmation email delivery fails", async () => {
+    mockExecute.mockResolvedValueOnce([[testUser]]);
+    mockSuccessfulBooking();
+    mockSendEmail.mockRejectedValueOnce(Object.assign(new Error("SMTP down"), {
+      code: "ECONNRESET",
+    }));
+
+    const { createApp } = await import("../app.js");
+    const app = createApp();
+
+    const res = await request(app)
+      .post("/api/bookings")
+      .set("Authorization", `Bearer ${getToken()}`)
+      .send({
+        eventId: "event-1",
+        slot: "7:00 PM",
+        quantity: 2,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.booking.id).toBe("booking-1");
+    expect(res.body.emailDelivery.status).toBe("failed");
+    expect(res.body.emailDelivery.emailSent).toBe(false);
     expect(mockConnection.commit).toHaveBeenCalledOnce();
   });
 });
