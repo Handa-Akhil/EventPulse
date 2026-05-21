@@ -5,8 +5,51 @@ import {
 } from "./session";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const RETRYABLE_STATUSES = new Set([500, 502, 503, 504]);
+
+class ApiError extends Error {
+  constructor(message, { status = 0, payload = null, isNetworkError = false } = {}) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.payload = payload;
+    this.isNetworkError = isNetworkError;
+  }
+}
+
+function wait(ms) {
+  return new Promise((resolve) => {
+    globalThis.setTimeout(resolve, ms);
+  });
+}
 
 async function request(path, options = {}) {
+  const retryCount = Number.isInteger(options.retryCount) ? options.retryCount : 0;
+  const retryDelayMs = Number.isFinite(options.retryDelayMs) ? options.retryDelayMs : 750;
+  let lastError;
+
+  for (let attempt = 0; attempt <= retryCount; attempt += 1) {
+    try {
+      return await sendRequest(path, options);
+    } catch (error) {
+      lastError = error;
+
+      const shouldRetry =
+        attempt < retryCount &&
+        (error?.isNetworkError || RETRYABLE_STATUSES.has(error?.status));
+
+      if (!shouldRetry) {
+        throw error;
+      }
+
+      await wait(retryDelayMs * (attempt + 1));
+    }
+  }
+
+  throw lastError;
+}
+
+async function sendRequest(path, options = {}) {
   const token = getSessionToken();
   const headers = new Headers(options.headers || {});
 
@@ -18,12 +61,21 @@ async function request(path, options = {}) {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: options.method || "GET",
-    headers,
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-    credentials: options.credentials || "same-origin",
-  });
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      method: options.method || "GET",
+      headers,
+      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      credentials: options.credentials || "same-origin",
+    });
+  } catch (error) {
+    throw new ApiError("Unable to reach the EventPulse API. Please try again.", {
+      isNetworkError: true,
+      payload: error,
+    });
+  }
 
   const contentType = response.headers.get("content-type") || "";
   let payload;
@@ -34,7 +86,9 @@ async function request(path, options = {}) {
       : await response.text();
   } catch (error) {
     console.error("Failed to parse response:", error);
-    throw new Error("Server returned invalid response format");
+    throw new ApiError("Server returned invalid response format", {
+      status: response.status,
+    });
   }
 
   if (!response.ok) {
@@ -45,10 +99,12 @@ async function request(path, options = {}) {
     const message =
       typeof payload === "object" && payload && "message" in payload
         ? payload.message
+        : typeof payload === "string" && payload.trim()
+          ? payload.trim()
         : `Request failed (${response.status})`;
 
     console.error("API Error:", { status: response.status, path, message, payload });
-    throw new Error(message);
+    throw new ApiError(message, { status: response.status, payload });
   }
 
   return payload;
@@ -93,6 +149,8 @@ export async function loginWithGoogle(payload) {
   const response = await request("/auth/google", {
     method: "POST",
     body: payload,
+    retryCount: 4,
+    retryDelayMs: 800,
   });
 
   saveSessionToken(response.token);

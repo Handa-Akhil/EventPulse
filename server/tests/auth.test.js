@@ -235,4 +235,48 @@ describe("Auth API", () => {
     expect(res.body.user.email).toBe("missing@test.com");
     expect(res.body.user.name).toBe("Missing User");
   });
+
+  it("should keep Google login successful if the welcome notification fails", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    mocks.verifyFirebaseIdToken.mockResolvedValueOnce({
+      email: "notify-fail@test.com",
+      email_verified: true,
+      name: "Notify Fail",
+      firebase: {
+        sign_in_provider: "google.com",
+      },
+    });
+
+    mocks.execute
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockRejectedValueOnce(new Error("notification insert failed"))
+      .mockResolvedValueOnce([
+        [
+          {
+            id: "user-3",
+            name: "Notify Fail",
+            email: "notify-fail@test.com",
+            password_hash: "generated-google-login-password",
+            preferences_json: "[]",
+            saved_location_json: null,
+            has_onboarded: 0,
+          },
+        ],
+      ]);
+
+    const { createApp } = await import("../app.js");
+    const app = createApp();
+
+    const res = await request(app).post("/api/auth/google").send({
+      idToken: "firebase-id-token",
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.token).toBeDefined();
+    expect(res.body.user.email).toBe("notify-fail@test.com");
+
+    consoleError.mockRestore();
+  });
 });

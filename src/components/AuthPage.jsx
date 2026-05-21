@@ -5,6 +5,7 @@ import {
   getFirebaseGoogleRedirectResult,
   isFirebaseAuthConfigured,
   signInWithFirebaseGoogle,
+  startFirebaseGoogleRedirect,
 } from "../services/firebaseAuth";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 
@@ -190,10 +191,23 @@ export default function AuthPage({ onGoogleLogin, onLogin, onSignup }) {
     try {
       const result = await signInWithFirebaseGoogle();
 
-      await onGoogleLogin({ idToken: result.idToken });
+      if (!result?.idToken) {
+        throw new Error("Google account could not be verified. Please try again.");
+      }
 
+      await onGoogleLogin({ idToken: result.idToken });
       startTransition(() => navigate("/"));
     } catch (submissionError) {
+      if (submissionError?.code === "auth/popup-blocked") {
+        try {
+          await startFirebaseGoogleRedirect();
+          return;
+        } catch (redirectError) {
+          setError(getFirebaseGoogleAuthErrorMessage(redirectError));
+          return;
+        }
+      }
+
       setError(getFirebaseGoogleAuthErrorMessage(submissionError));
     } finally {
       setIsSubmitting(false);

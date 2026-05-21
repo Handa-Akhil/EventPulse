@@ -115,6 +115,14 @@ async function createWelcomeNotification(pool, userId, name) {
   );
 }
 
+async function createWelcomeNotificationSafely(pool, userId, name) {
+  try {
+    await createWelcomeNotification(pool, userId, name);
+  } catch (error) {
+    console.error("Failed to create welcome notification:", error.message);
+  }
+}
+
 router.post("/signup", authWriteLimiter, async (req, res, next) => {
   try {
     const name = String(req.body?.name || "").trim();
@@ -174,7 +182,7 @@ router.post("/signup", authWriteLimiter, async (req, res, next) => {
     const user = serializeUser(rows[0]);
     const token = createAuthToken(user.id);
 
-    await createWelcomeNotification(pool, userId, name);
+    await createWelcomeNotificationSafely(pool, userId, name);
 
     res.status(201).json({ token, user });
   } catch (error) {
@@ -238,7 +246,11 @@ router.post("/google", authWriteLimiter, async (req, res, next) => {
 
     try {
       payload = await verifyFirebaseIdToken(idToken);
-    } catch {
+    } catch (error) {
+      console.warn("Firebase Google token verification failed:", {
+        code: error?.code,
+        message: error?.message,
+      });
       res.status(401).json({ message: "Unable to verify Firebase Google account." });
       return;
     }
@@ -276,7 +288,7 @@ router.post("/google", authWriteLimiter, async (req, res, next) => {
         [userId, name, email, passwordHash, JSON.stringify([]), 0],
       );
 
-      await createWelcomeNotification(pool, userId, name);
+      await createWelcomeNotificationSafely(pool, userId, name);
 
       userRow = await getUserByEmail(pool, email);
 

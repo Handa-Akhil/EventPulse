@@ -56,12 +56,8 @@ export async function signInWithFirebaseGoogle() {
   await persistencePromise;
 
   const result = await signInWithPopup(auth, getGoogleProvider());
-  const idToken = await result.user.getIdToken();
 
-  return {
-    idToken,
-    email: result.user.email || "",
-  };
+  return buildGoogleLoginResult(result.user);
 }
 
 export async function startFirebaseGoogleRedirect() {
@@ -80,24 +76,29 @@ export async function getFirebaseGoogleRedirectResult() {
 
   const result = await redirectResultPromise;
 
-  if (!result?.user) {
+  return buildGoogleLoginResult(result?.user);
+}
+
+async function buildGoogleLoginResult(user) {
+  if (!user) {
     return null;
   }
 
-  const idToken = await result.user.getIdToken();
+  const idToken = await user.getIdToken(true);
 
   return {
     idToken,
-    email: result.user.email || "",
+    email: user.email || "",
   };
 }
+
 
 export function getFirebaseGoogleAuthErrorMessage(error) {
   const currentHost =
     typeof window === "undefined" ? "this domain" : window.location.hostname;
 
   if (error?.code === "auth/popup-closed-by-user") {
-    return "Google login did not finish. Please try again.";
+    return "Google sign-in was cancelled before Firebase returned an account. Refresh the page and try again.";
   }
 
   if (error?.code === "auth/popup-blocked") {

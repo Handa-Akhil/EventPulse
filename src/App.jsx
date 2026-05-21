@@ -62,7 +62,6 @@ export default function App() {
     async function restoreSession() {
       try {
         const user = await getSessionUser();
-
         if (!ignore) {
           setCurrentUser(user);
         }
@@ -159,14 +158,7 @@ export default function App() {
 
   
   if (isBootstrapping) {
-    return (
-      <main className="page-shell auth-page">
-        <div className="empty-state panel fade-up">
-          <h2>Loading EventPulse...</h2>
-          <p>Connecting to the API and restoring your session.</p>
-        </div>
-      </main>
-    );
+    return null;
   }
 
   return (
