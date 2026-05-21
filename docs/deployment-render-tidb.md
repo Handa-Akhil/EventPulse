@@ -31,6 +31,10 @@
 5. Set `CLIENT_ORIGINS` to your Render URL. Add local dev origins only outside production.
 6. Set strong values for `AUTH_SECRET` and `ADMIN_AUTH_SECRET`.
 7. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` to your real admin credentials.
+8. For Google login, set every `VITE_FIREBASE_*` variable in Render before the build runs, then redeploy. Vite embeds these values into the client bundle at build time.
+9. In Firebase Console, open Authentication -> Settings -> Authorized domains and add your Render host, for example `eventpulse.onrender.com`. Add only the host name, not `https://`.
+10. In Firebase Console, open Authentication -> Sign-in method and make sure Google is enabled.
+11. Set either `FIREBASE_SERVICE_ACCOUNT` or `FIREBASE_SERVICE_ACCOUNT_BASE64` in Render so the API can verify Firebase ID tokens.
 
 ## Required production env vars
 
@@ -46,6 +50,14 @@
 - `TIDB_PASSWORD`
 - `TIDB_DB_NAME`
 - `TIDB_ENABLE_SSL`
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_SERVICE_ACCOUNT` or `FIREBASE_SERVICE_ACCOUNT_BASE64`
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
 
 ## Optional production env vars
 
@@ -59,16 +71,8 @@
 - `SMTP_USER`
 - `SMTP_PASS`
 - `MAIL_FROM`
-- `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
 - `FIREBASE_PRIVATE_KEY`
-- `FIREBASE_SERVICE_ACCOUNT` or `FIREBASE_SERVICE_ACCOUNT_BASE64`
-- `VITE_FIREBASE_API_KEY`
-- `VITE_FIREBASE_AUTH_DOMAIN`
-- `VITE_FIREBASE_PROJECT_ID`
-- `VITE_FIREBASE_APP_ID`
-- `VITE_FIREBASE_STORAGE_BUCKET`
-- `VITE_FIREBASE_MESSAGING_SENDER_ID`
 
 ## First deploy checklist
 
@@ -83,7 +87,22 @@
    - event approval
    - booking flow
    - notification flow
-   - Firebase Google login if configured
+   - Firebase Google login on the Render URL, not only locally
+
+## Google login on Render
+
+The production app uses Firebase full-page redirect login. This avoids browser popup blockers and works on Render as long as the Render domain is authorized in Firebase.
+
+Use the Render URL exactly as users open it, for example `https://eventpulse.onrender.com`. In Firebase Authorized domains, add only `eventpulse.onrender.com`.
+
+After changing any `VITE_FIREBASE_*` variable in Render, trigger a new deploy. Runtime restarts are not enough because these variables are compiled into the React bundle.
+
+If login returns to the auth page with an error:
+
+- `This domain is not authorized...`: add the Render host in Firebase Authorized domains and redeploy if the URL/env changed.
+- `Google sign-in is not enabled...`: enable Google in Firebase Authentication sign-in providers.
+- `Firebase web app configuration is invalid...`: check the `VITE_FIREBASE_*` Render environment variables and redeploy.
+- `Unable to verify Firebase Google account.`: replace the backend `FIREBASE_SERVICE_ACCOUNT` or `FIREBASE_SERVICE_ACCOUNT_BASE64` value in Render.
 
 ## Local commands
 

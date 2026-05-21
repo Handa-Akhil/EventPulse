@@ -8,3 +8,5 @@ Thumbs.db
 certs/
 vite-dev.log
 vite-dev.err.log
+dev-full.log
+dev-full.err.log

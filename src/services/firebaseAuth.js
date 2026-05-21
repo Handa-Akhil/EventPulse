@@ -93,6 +93,9 @@ export async function getFirebaseGoogleRedirectResult() {
 }
 
 export function getFirebaseGoogleAuthErrorMessage(error) {
+  const currentHost =
+    typeof window === "undefined" ? "this domain" : window.location.hostname;
+
   if (error?.code === "auth/popup-closed-by-user") {
     return "Google login did not finish. Please try again.";
   }
@@ -102,7 +105,7 @@ export function getFirebaseGoogleAuthErrorMessage(error) {
   }
 
   if (error?.code === "auth/unauthorized-domain") {
-    return "This domain is not authorized in Firebase Authentication. Add localhost and 127.0.0.1 in Firebase Auth settings.";
+    return `This domain is not authorized in Firebase Authentication. Add ${currentHost} in Firebase Auth settings.`;
   }
 
   if (error?.code === "auth/operation-not-allowed") {
