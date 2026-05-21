@@ -37,8 +37,8 @@ vi.mock("../config.js", () => ({
     },
     mail: {},
     logging: {},
-    google: {
-      clientId: "",
+    firebase: {
+      projectId: "",
     },
   },
 }));

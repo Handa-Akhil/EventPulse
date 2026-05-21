@@ -59,8 +59,16 @@
 - `SMTP_USER`
 - `SMTP_PASS`
 - `MAIL_FROM`
-- `GOOGLE_CLIENT_ID`
-- `VITE_GOOGLE_CLIENT_ID`
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
+- `FIREBASE_SERVICE_ACCOUNT` or `FIREBASE_SERVICE_ACCOUNT_BASE64`
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
 
 ## First deploy checklist
 
@@ -75,7 +83,7 @@
    - event approval
    - booking flow
    - notification flow
-   - Google login if configured
+   - Firebase Google login if configured
 
 ## Local commands
 

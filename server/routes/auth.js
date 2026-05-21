@@ -2,17 +2,19 @@ import { randomInt, randomUUID } from "node:crypto";
 import express from "express";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
-import { OAuth2Client } from "google-auth-library";
 import { config } from "../config.js";
 import { getPool } from "../db/pool.js";
 import { createAuthToken, requireAuth } from "../middleware/auth.js";
 import { sendEmail } from "../services/emailService.js";
+import {
+  isFirebaseAdminConfigured,
+  verifyFirebaseIdToken,
+} from "../services/firebaseAdmin.js";
 import { serializeUser } from "../utils/serializers.js";
 
 const router = express.Router();
 const PASSWORD_RESET_OTP_LENGTH = 6;
 const PASSWORD_RESET_OTP_EXPIRY_MINUTES = 10;
-const googleClient = new OAuth2Client();
 const authWriteLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: config.isProduction ? 20 : 200,
@@ -195,36 +197,37 @@ router.post("/login", authWriteLimiter, async (req, res, next) => {
 
 router.post("/google", authWriteLimiter, async (req, res, next) => {
   try {
-    const credential = String(req.body?.credential || "").trim();
+    const idToken = String(req.body?.idToken || req.body?.credential || "").trim();
 
-    if (!config.google.clientId) {
-      res.status(500).json({ message: "Google login is not configured." });
+    if (!isFirebaseAdminConfigured()) {
+      res.status(500).json({ message: "Firebase Google login is not configured." });
       return;
     }
 
-    if (!credential) {
-      res.status(400).json({ message: "Google credential is required." });
+    if (!idToken) {
+      res.status(400).json({ message: "Firebase ID token is required." });
       return;
     }
 
     let payload;
 
     try {
-      const ticket = await googleClient.verifyIdToken({
-        idToken: credential,
-        audience: config.google.clientId,
-      });
-
-      payload = ticket.getPayload();
+      payload = await verifyFirebaseIdToken(idToken);
     } catch {
-      res.status(401).json({ message: "Unable to verify Google account." });
+      res.status(401).json({ message: "Unable to verify Firebase Google account." });
       return;
     }
 
     const email = normalizeEmail(payload?.email);
+    const signInProvider = payload?.firebase?.sign_in_provider;
 
     if (!payload?.email_verified || !email) {
       res.status(401).json({ message: "Please use a verified Google account." });
+      return;
+    }
+
+    if (signInProvider !== "google.com") {
+      res.status(401).json({ message: "Please sign in with Google through Firebase." });
       return;
     }
 

@@ -4,7 +4,8 @@ import bcrypt from "bcryptjs";
 
 const mocks = vi.hoisted(() => ({
   execute: vi.fn(),
-  verifyIdToken: vi.fn(),
+  isFirebaseAdminConfigured: vi.fn(() => true),
+  verifyFirebaseIdToken: vi.fn(),
 }));
 
 vi.mock("../db/pool.js", () => ({
@@ -13,12 +14,9 @@ vi.mock("../db/pool.js", () => ({
   })),
 }));
 
-vi.mock("google-auth-library", () => ({
-  OAuth2Client: function MockOAuth2Client() {
-    return {
-      verifyIdToken: mocks.verifyIdToken,
-    };
-  },
+vi.mock("../services/firebaseAdmin.js", () => ({
+  isFirebaseAdminConfigured: mocks.isFirebaseAdminConfigured,
+  verifyFirebaseIdToken: mocks.verifyFirebaseIdToken,
 }));
 
 vi.mock("../config.js", () => ({
@@ -44,8 +42,8 @@ vi.mock("../config.js", () => ({
     db: {},
     mail: {},
     logging: {},
-    google: {
-      clientId: "test-google-client-id.apps.googleusercontent.com",
+    firebase: {
+      projectId: "test-firebase-project",
     },
   },
 }));
@@ -54,7 +52,9 @@ describe("Auth API", () => {
   beforeEach(() => {
     vi.resetModules();
     mocks.execute.mockReset();
-    mocks.verifyIdToken.mockReset();
+    mocks.isFirebaseAdminConfigured.mockReset();
+    mocks.isFirebaseAdminConfigured.mockReturnValue(true);
+    mocks.verifyFirebaseIdToken.mockReset();
   });
 
   it("should reject signup with invalid email", async () => {
@@ -160,12 +160,13 @@ describe("Auth API", () => {
     expect(res.body.user.email).toBe("rajat@test.com");
   });
 
-  it("should login with Google when the email matches an existing account", async () => {
-    mocks.verifyIdToken.mockResolvedValueOnce({
-      getPayload: () => ({
-        email: "rajat@test.com",
-        email_verified: true,
-      }),
+  it("should login with Firebase Google when the email matches an existing account", async () => {
+    mocks.verifyFirebaseIdToken.mockResolvedValueOnce({
+      email: "rajat@test.com",
+      email_verified: true,
+      firebase: {
+        sign_in_provider: "google.com",
+      },
     });
 
     mocks.execute.mockResolvedValueOnce([
@@ -186,7 +187,7 @@ describe("Auth API", () => {
     const app = createApp();
 
     const res = await request(app).post("/api/auth/google").send({
-      credential: "google-id-token",
+      idToken: "firebase-id-token",
     });
 
     expect(res.status).toBe(200);
@@ -194,12 +195,13 @@ describe("Auth API", () => {
     expect(res.body.user.email).toBe("rajat@test.com");
   });
 
-  it("should reject Google login when no account matches the Google email", async () => {
-    mocks.verifyIdToken.mockResolvedValueOnce({
-      getPayload: () => ({
-        email: "missing@test.com",
-        email_verified: true,
-      }),
+  it("should reject Firebase Google login when no account matches the Google email", async () => {
+    mocks.verifyFirebaseIdToken.mockResolvedValueOnce({
+      email: "missing@test.com",
+      email_verified: true,
+      firebase: {
+        sign_in_provider: "google.com",
+      },
     });
 
     mocks.execute.mockResolvedValueOnce([[]]);
@@ -208,7 +210,7 @@ describe("Auth API", () => {
     const app = createApp();
 
     const res = await request(app).post("/api/auth/google").send({
-      credential: "google-id-token",
+      idToken: "firebase-id-token",
     });
 
     expect(res.status).toBe(404);
